@@ -7,13 +7,21 @@ import { convertMarkdownToPdf } from "./core/convert.js";
 import { DEFAULTS } from "./core/options.js";
 import { HELP, parseArgs, tokenizeCommand } from "./core/argv.js";
 import { resolveWorkspacePaths } from "./core/workspace.js";
+import { getMd2pdfArgumentCompletions } from "./ui/completion.js";
+import { formatMd2pdfCall, formatMd2pdfResult } from "./ui/display.js";
+import { Text } from "@earendil-works/pi-tui";
 
 async function exists(file: string): Promise<boolean> {
   try { await access(file, constants.F_OK); return true; } catch { return false; }
 }
 export default function piMd2Pdf(pi: ExtensionAPI): void {
+  // Pi's autocomplete callback does not receive a command context. Track the
+  // active session cwd, falling back to the process directory during startup.
+  let completionCwd = process.cwd();
+  pi.on("session_start", (_event, ctx) => { completionCwd = ctx.cwd; });
   pi.registerCommand("md2pdf", {
-    description: `Convert Markdown to PDF (${DEFAULTS.theme}; ${DEFAULTS.paper}; no TOC or added numbering by default), without a model call`,
+    description: `/md2pdf FILE.md [OUT.pdf] [--toc] [--number-sections] [--paper a4|letter] [--force] (defaults: ${DEFAULTS.paper}, no TOC)`,
+    getArgumentCompletions: (prefix) => getMd2pdfArgumentCompletions(prefix, completionCwd),
     handler: async (args, ctx) => {
       const report = (message: string, level: "info" | "warning" | "error") => {
         if (ctx.hasUI) ctx.ui.notify(message, level);
@@ -72,6 +80,17 @@ export default function piMd2Pdf(pi: ExtensionAPI): void {
         content: [{ type: "text", text: "Created " + result.output + " (" + result.bytes + " bytes)" }],
         details: result,
       };
+    },
+    renderCall(params, theme) {
+      return new Text(
+        theme.fg("toolTitle", theme.bold("markdown_to_pdf")) +
+          "  " + theme.fg("accent", formatMd2pdfCall(params)), 0, 0,
+      );
+    },
+    renderResult(result, { expanded }, theme) {
+      const fallback = result.content?.find(item => item.type === "text")?.text ?? "";
+      const summary = formatMd2pdfResult(result.details, fallback, expanded);
+      return new Text(theme.fg("toolOutput", summary), 0, 0);
     },
   }));
 }
