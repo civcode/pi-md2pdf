@@ -1,4 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import piMd2Pdf from "../src/extension.js";
 import { DEFAULTS } from "../src/core/options.js";
@@ -29,9 +32,38 @@ describe("Pi agent tool documentation", () => {
     expect(description).toContain("explicitly specifies an occupied output");
     expect(description).toContain("explicitly requests");
     expect(description).toContain("plain conversion");
+    expect(description).toContain("NEVER search the home directory");
+    expect(description).toContain("current working directory");
     const schemaText = JSON.stringify(tools[0]!.parameters);
     expect(schemaText).toContain("ONLY");
     expect(schemaText).toContain("user requests");
     expect(schemaText).toContain("authorization");
+  });
+
+  it("hard-blocks outside-workspace files at the Pi tool boundary", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "md2pdf-tool-boundary-"));
+    try {
+      const cwd = path.join(root, "project");
+      const foreign = path.join(root, "other");
+      await mkdir(cwd);
+      await mkdir(foreign);
+      const externalMd = path.join(foreign, "specification.md");
+      await writeFile(externalMd, "# Unrelated project");
+      const tools: Array<{
+        name: string;
+        execute: (...args: unknown[]) => Promise<unknown>;
+      }> = [];
+      piMd2Pdf({
+        registerCommand() {},
+        registerTool(tool: { name: string; execute: (...args: unknown[]) => Promise<unknown> }) {
+          tools.push(tool);
+        },
+      } as unknown as ExtensionAPI);
+      const tool = tools.find(t => t.name === "markdown_to_pdf");
+      expect(tool).toBeDefined();
+      await expect(tool!.execute(
+        "test-call", { input: externalMd }, new AbortController().signal, undefined, { cwd },
+      )).rejects.toThrow(/outside Pi's working directory/);
+    } finally { await rm(root, { recursive: true, force: true }); }
   });
 });
