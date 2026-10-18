@@ -3,6 +3,32 @@
 **Status:** Test plan only. No tests are marked passed.  
 **Purpose:** Exercise real Pi behavior, browser integration, and terminal interaction that mocks/unit tests do not establish.
 
+## Run the complete suite in one command
+
+From the pi-md2pdf checkout:
+
+```bash
+git pull --ff-only && bash scripts/check-linux-e2e.sh
+```
+
+This command creates **new disposable fixtures** under `/tmp/pi-md2pdf-e2e.*`,
+then runs TypeScript/Vitest/build/real-loader/tarball checks, direct Pi PDF
+conversions, failure and collision tests, four real agent JSON checks, and
+finally opens interactive Pi with a printed manual checklist. It **does not**
+modify existing reports, publish, merge, or run GitHub Actions. Test PDFs and
+logs are intentionally retained for review; delete the QA folder afterward
+when no longer needed.
+
+The four agent checks use model/API tokens. To run deterministic tests only
+and skip the interactive Pi session:
+
+```bash
+RUN_AGENT=0 RUN_INTERACTIVE=0 bash scripts/check-linux-e2e.sh
+```
+
+The detailed checks below describe what the runner exercises and what still
+requires observation inside the interactive terminal.
+
 Pi references: [CLI](https://pi.dev/docs/latest/cli), [CLI integration](https://pi.dev/docs/latest/cli-integration), [JSON events](https://pi.dev/docs/latest/json).
 
 ## 0. Prepare a disposable directory
