@@ -4,6 +4,34 @@
 **Branch:** `feat/initial-implementation`  
 **Status:** Linux development and package checks passed; not yet a cross-platform validated release.
 
+## v0.1.0 release-candidate preparation (2026-10-18)
+
+The feature branch now has a release-focused manifest and documentation:
+`private: true` was removed, `publishConfig.access` was set to `public`,
+and `prepack` runs `npm run build` before a future explicitly authorized
+`npm pack` or `npm publish`. The npm `files` allowlist now includes
+`CHANGELOG.md` and `THIRD_PARTY_NOTICES.md` as well as the compiled CLI,
+extension, shared JS chunk, and print CSS.
+
+The `scripts/check-package.mjs` test no longer disables npm packing
+lifecycle scripts: it tests a genuine `prepack` build, parses the final npm
+tarball filename, verifies the installed artifact contains the changelog,
+license, notices, and expected package manifest, then exercises the real Pi
+loader and a PDF export. It still disables install scripts in its isolated
+test prefix.
+
+The README, compatibility matrix, roadmap, changelog, license notices,
+and [release checklist](RELEASE.md) have been prepared for v0.1.0.
+
+**Not yet validated after these packaging changes:** rerun `npm ci`,
+`npm run typecheck`, `npm test`, `npm run build`, `npm run check:load`,
+`npm run check:package`, and `npm run pack:check` on a host with npm
+dependencies and an installed headless browser. Prior Linux checks (40/40)
+apply to the **pre-release-preparation commit**, not this revised tarball.
+The remaining low-severity development audit finding should be reviewed.
+Native Windows/macOS execution has not been confirmed. No merge, tag,
+GitHub release, npm publication or GitHub Actions execution occurred.
+
 ## Current validation — Linux, 2026-10-18 (post-hardening)
 
 **Outcome:** All local Linux v1 code/package verification checks passed on the
