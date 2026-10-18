@@ -148,6 +148,16 @@ No calendar deadlines or guaranteed durations are assumed. Phases may be split i
 
 **Suggested commit:** `docs: prepare pi-md2pdf release candidate`.
 
+## Extra pre-release verification (implemented, pending execution)
+
+- [x] Add `npm run check:load` using Pi's real extension loader.
+- [x] Add `npm run check:package` for an isolated npm tarball install, real Pi loader check, and PDF export.
+- [x] Add deterministic tests for browser startup failure, render failure, cancellation, timeout, and cleanup.
+- [x] Add Windows drive-letter, case-insensitive and UNC path tests.
+- [ ] Run `npm run typecheck && npm test && npm run build` on the current branch.
+- [ ] Run `npm run check:load && npm run check:package` on a host with npm access and Chromium.
+- [ ] Validate the installed package on Windows and macOS before claiming support.
+
 ## Quality gates and traceability
 
 | Gate | Required evidence |
