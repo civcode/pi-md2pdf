@@ -59,6 +59,8 @@ describe("Pi /md2pdf argument completion", () => {
       const flags = getMd2pdfArgumentCompletions("report.md --", cwd) ?? [];
       expect(flags.map(item => item.value)).toContain("report.md --toc");
       expect(flags.map(item => item.value)).toContain("report.md --paper");
+      expect(flags.map(item => item.value)).toContain("report.md --output");
+      expect(flags.map(item => item.value)).not.toContain("report.md -o");
       expect(flags.find(item => item.value === "report.md --number-sections")?.description)
         .toContain("heading numbers");
       expect((getMd2pdfArgumentCompletions('"My Report.md" --pa', cwd) ?? []).map(i => i.value))
