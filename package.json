@@ -1,0 +1,49 @@
+{
+  "name": "pi-md2pdf",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Beautiful, local GitHub-style Markdown to PDF exports for Pi and the terminal",
+  "type": "module",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "git+https://github.com/civcode/pi-md2pdf.git" },
+  "homepage": "https://github.com/civcode/pi-md2pdf#readme",
+  "bugs": "https://github.com/civcode/pi-md2pdf/issues",
+  "keywords": ["pi-package", "pi", "markdown", "pdf", "chromium"],
+  "engines": { "node": ">=22.19.0" },
+  "bin": { "md2pdf": "./dist/cli.js" },
+  "pi": { "extensions": ["./dist/extension.js"] },
+  "files": ["dist/", "styles/", "README.md", "LICENSE"],
+  "scripts": {
+    "build": "tsup src/cli.ts src/extension.ts --format esm --target node22 --out-dir dist --clean",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "lint": "tsc --noEmit",
+    "pack:check": "npm pack --dry-run"
+  },
+  "dependencies": {
+    "github-markdown-css": "^5.8.1",
+    "highlight.js": "^11.11.1",
+    "markdown-it": "^14.1.0",
+    "markdown-it-anchor": "^9.2.0",
+    "puppeteer-core": "^24.20.0"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-ai": "*",
+    "@earendil-works/pi-coding-agent": "*",
+    "typebox": "*"
+  },
+  "peerDependenciesMeta": {
+    "@earendil-works/pi-ai": { "optional": true },
+    "@earendil-works/pi-coding-agent": { "optional": true },
+    "typebox": { "optional": true }
+  },
+  "devDependencies": {
+    "@earendil-works/pi-ai": "^1.0.0",
+    "@earendil-works/pi-coding-agent": "^1.0.0",
+    "@types/markdown-it": "^14.1.2",
+    "@types/node": "^22.15.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  }
+}
