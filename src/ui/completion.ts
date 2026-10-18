@@ -12,7 +12,7 @@ const FLAGS: AutocompleteItem[] = [
   { value: "--help", label: "--help", description: "Show md2pdf usage" },
 ];
 
-const VALUE_FLAGS = new Set(["--paper", "-o", "--output", "--browser-path"]);
+const VALUE_FLAGS = new Set(["--paper", "--output", "--browser-path"]);
 
 interface CursorTokens {
   previous: string[];
