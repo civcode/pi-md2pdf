@@ -33,7 +33,7 @@ export async function renderMarkdown(source: string, input: string, opts: Render
   // headings such as "1.1 1. Purpose" and obscure the original organization.
   const hasExistingNumbering = tokens.some((token, index) =>
     token.type === "heading_open" && tokens[index + 1]?.type === "inline" &&
-    /^\s*\d+(?:\.\d+)*\.?\s+\S/.test(tokens[index + 1]!.content),
+    /^\s*(?:\d+\.\s+|\d+(?:\.\d+)+\.?\s+)\S/.test(tokens[index + 1]!.content),
   );
   const autoNumber = opts.numberSections && !hasExistingNumbering;
   for (let i = 0; i < tokens.length; i++) {
