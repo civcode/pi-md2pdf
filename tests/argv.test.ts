@@ -1,6 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { parseArgs, tokenizeCommand } from "../src/core/argv.js";
+import { HELP, parseArgs, tokenizeCommand } from "../src/core/argv.js";
+import { DEFAULTS } from "../src/core/options.js";
 describe("command arguments", () => {
+  it("leaves absent CLI options unset for shared normalization", () => {
+    const parsed = parseArgs(["report.md"]);
+    expect(parsed.options).toEqual({ input: "report.md" });
+    expect(HELP).toContain(`default: ${DEFAULTS.paper}`);
+    expect(HELP).toContain(`default: ${DEFAULTS.toc}`);
+    expect(HELP).toContain(`default: ${DEFAULTS.numberSections}`);
+    expect(HELP).toContain(`default: ${DEFAULTS.overwrite}`);
+    expect(HELP).toContain(DEFAULTS.theme);
+  });
   it("parses CLI flags", () => {
     const args = parseArgs(["report.md", "-o", "report.pdf", "--toc", "--paper", "letter", "--number-sections"]);
     expect(args.options).toMatchObject({ input: "report.md", output: "report.pdf", paper: "letter", toc: true, numberSections: true });
