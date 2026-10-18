@@ -135,6 +135,33 @@ Implemented on `feat/initial-implementation`:
 
 **Validation status:** Changes have been committed and pushed, but `npm run typecheck`, `npm test`, `npm run build`, and actual Pi smoke tests must be rerun after pulling the commits. This container lacks the project's npm dependencies and cannot access the registry; no GitHub Actions runs were used. Tool descriptions guide an LLM but cannot guarantee that the model will never choose extra options.
 
+## Automatic output naming and print layout (2026-10-18)
+
+Implemented on `feat/initial-implementation`:
+
+- `DEFAULTS.outputConflict = "increment"`. If the caller omits the output path, the shared engine saves to the first free filename: `report.pdf`, `report-2.pdf`, `report-3.pdf`, etc.
+- Explicit output paths retain strict non-overwrite behavior; `--force` / `overwrite: true` remains an explicit authorization to replace a PDF.
+- The renderer publishes completed PDFs with an **atomic hard-link operation** into the destination directory and retries on `EEXIST`. Simultaneous conversions cannot overwrite an existing PDF or one another.
+- Pi's direct slash command no longer synthesizes an explicit default output path. It delegates naming to the shared engine, avoiding automatic overwrite-confirmation dialogs for implicit outputs. Explicit occupied paths can still receive interactive confirmation.
+- Updated agent tool metadata, CLI help, README, v1 specification, and development roadmap.
+- Changed Chromium PDF margins from 15 mm to **10 mm** and stopped forcing all tables to full width (`width: auto; max-width: 100%`).
+- Added `tests/output.test.ts` for suffix selection, existing-file preservation, explicit overwrite, and eight simultaneous writes; extended integration, default-policy and print CSS tests.
+
+**Not yet verified:** The new source and tests were pushed, but post-change `npm run typecheck`, `npm test`, `npm run build`, `npm run pack:check`, and real Pi commands need a fresh local run. The current workspace has no cached npm dependencies or npm registry access, so full validation was unavailable; no GitHub Actions were invoked.
+
+Recommended local checks:
+
+```sh
+git pull --ff-only
+npm run typecheck
+npm test
+npm run build
+npm run pack:check
+node dist/cli.js --check
+```
+
+For a no-clobber smoke test, convert the same Markdown file twice **without `-o`** in a temporary folder and verify that the two outputs are named `sample.pdf` and `sample-2.pdf`. Re-export the UWB specification to compare 10 mm margins and natural-width tables with the Chrome Markdown Viewer baseline (72 pages). Neither exact page-count equivalence nor native Windows/macOS output is verified yet.
+
 ## Unverified / release blockers
 
 - [ ] Regenerate, validate, and commit `package-lock.json` after upgrading dependencies.
