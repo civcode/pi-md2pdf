@@ -5,20 +5,44 @@
   "description": "Beautiful, local GitHub-style Markdown to PDF exports for Pi and the terminal",
   "type": "module",
   "license": "MIT",
-  "repository": { "type": "git", "url": "git+https://github.com/civcode/pi-md2pdf.git" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/civcode/pi-md2pdf.git"
+  },
   "homepage": "https://github.com/civcode/pi-md2pdf#readme",
   "bugs": "https://github.com/civcode/pi-md2pdf/issues",
-  "keywords": ["pi-package", "pi", "markdown", "pdf", "chromium"],
-  "engines": { "node": ">=22.19.0" },
-  "bin": { "md2pdf": "./dist/cli.js" },
-  "pi": { "extensions": ["./dist/extension.js"] },
-  "files": ["dist/", "styles/", "README.md", "LICENSE"],
+  "keywords": [
+    "pi-package",
+    "pi",
+    "markdown",
+    "pdf",
+    "chromium"
+  ],
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "bin": {
+    "md2pdf": "./dist/cli.js"
+  },
+  "pi": {
+    "extensions": [
+      "./dist/extension.js"
+    ]
+  },
+  "files": [
+    "dist/",
+    "styles/",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsup src/cli.ts src/extension.ts --format esm --target node22 --out-dir dist --clean",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "lint": "tsc --noEmit",
-    "pack:check": "npm pack --dry-run"
+    "pack:check": "npm pack --dry-run",
+    "check:load": "node scripts/check-load.mjs",
+    "check:package": "node scripts/check-package.mjs"
   },
   "dependencies": {
     "github-markdown-css": "^5.8.1",
@@ -32,9 +56,15 @@
     "typebox": "*"
   },
   "peerDependenciesMeta": {
-    "@earendil-works/pi-ai": { "optional": true },
-    "@earendil-works/pi-coding-agent": { "optional": true },
-    "typebox": { "optional": true }
+    "@earendil-works/pi-ai": {
+      "optional": true
+    },
+    "@earendil-works/pi-coding-agent": {
+      "optional": true
+    },
+    "typebox": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@earendil-works/pi-ai": "^1.0.0",
