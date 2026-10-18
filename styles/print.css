@@ -9,7 +9,7 @@ body.markdown-body { box-sizing: border-box; margin: 0; padding: 0; color: #1f23
 .markdown-body h1, .markdown-body h2 { border-bottom: 1px solid #d1d9e0; padding-bottom: .3em; }
 .markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4, .markdown-body h5, .markdown-body h6 {
   break-after: avoid-page; page-break-after: avoid; }
-.markdown-body table { display: table; width: 100%; max-width: 100%; overflow: visible; border-collapse: collapse; }
+.markdown-body table { display: table; width: auto; max-width: 100%; table-layout: auto; overflow: visible; border-collapse: collapse; }
 .markdown-body table th, .markdown-body table td { border: 1px solid #d1d9e0; padding: 6px 10px; overflow-wrap: anywhere; }
 .markdown-body table tr:nth-child(even) { background: #f6f8fa; }
 .markdown-body table thead { display: table-header-group; }
