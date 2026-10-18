@@ -45,7 +45,7 @@ describe("Pi agent tool documentation", () => {
     expect(schemaText).toContain("authorization");
   });
 
-  it("rejects -o in the real Pi command handler but accepts CLI-style long output", async () => {
+  it("rejects -o in the real Pi handler and shows slash-specific help", async () => {
     let command: { handler: (args: string, ctx: unknown) => Promise<void> } | undefined;
     piMd2Pdf({
       registerCommand(_name: string, registered: typeof command) { command = registered; },
