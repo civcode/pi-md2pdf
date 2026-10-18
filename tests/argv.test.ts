@@ -26,7 +26,7 @@ describe("command arguments", () => {
     expect(parseArgs(["report.md", "pi.pdf"], true, false).options.output)
       .toBe("pi.pdf");
     expect(PI_HELP).toContain("--output PATH");
-    expect(PI_HELP).not.toMatch(/(?:^|\\s)-o(?:\\s|,|$)/);
+    expect(PI_HELP).not.toMatch(/(?:^|\s)-o(?:\s|,|$)/);
     expect(HELP).toContain("-o, --output");
   });
 
