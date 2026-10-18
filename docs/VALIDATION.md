@@ -41,18 +41,54 @@ Follow-up commits on the feature branch:
 
 **Validation still pending after those commits:** rerun `npm run typecheck`, `npm test`, `npm run build`, `npm run pack:check`, browser smoke test, and inspect an actual generated PDF. The above results refer to the version *before* the fixes and must not be presented as passing post-fix tests.
 
+## Linux retest — successful baseline (2026-10-18)
+
+The user reran validation on the feature branch after fixing the Pi progress update and stylesheet lookup:
+
+- `npm run typecheck`: **passed** (0 TS errors).
+- `npm test`: **17/17 tests passed** across 7 files, including the Chromium PDF integration test.
+- `npm run build`: **passed** (tsup ESM outputs `dist/cli.js`, `dist/extension.js`, and one shared chunk).
+- `npm run pack:check`: **passed**; tarball 11.0 kB compressed, 31.4 kB unpacked (not including dependencies).
+- `node dist/cli.js --check`: **passed**, Chromium 155.0.8059.39 (snap), 8,896-byte diagnostic PDF.
+- Real conversion: **passed**, generated a 37,944-byte PDF from `tests/fixtures/sample.md`.
+
+The uploaded sample PDF was independently inspected: one A4 page, selectable text, embedded Noto Sans/Liberation Mono fonts, **five working internal TOC links** plus an external URL hyperlink, styled headings/table/code, and correct German characters. This verifies the simple fixture, **not** long tables or multipage layouts.
+
+### Security audit reported by tester
+
+Before remediation, `npm audit` reported **11 advisories** (1 low, 1 moderate, 7 high, 2 critical); `npm audit --omit=dev` reported **7 high** through `puppeteer-core` 24.x's `@puppeteer/browsers` dependency chain (`basic-ftp`, `extract-zip`, etc.).
+
+The source manifest has been updated to **`puppeteer-core` ^25.14.0** and **`vitest` ^5.0.5**, following the versions suggested by npm audit and confirmed in upstream releases. These are **major-version upgrades and are not yet tested**. The installed lockfile still needs regeneration. The `esbuild` advisory may be fixable with a nonbreaking `npm audit fix`, but audit output must be checked again first.
+
+Run locally from the feature branch:
+
+```sh
+git pull --ff-only
+npm install
+npm run typecheck
+npm test
+npm run build
+npm run pack:check
+node dist/cli.js --check
+npm audit
+npm audit --omit=dev
+git status --short
+```
+
+Review and **commit the regenerated `package-lock.json`** after successful checks. Do not run `npm audit fix --force` indiscriminately. Changes remain on a draft PR, not on `main`.
+
 ## Unverified / release blockers
 
-- [ ] Run `npm install` and commit the generated `package-lock.json`.
-- [ ] Run `npm run typecheck` and fix any API/type mismatches with the installed current Pi version.
-- [ ] Run `npm test` and `npm run build` with dependencies installed.
-- [ ] Run real `md2pdf --check` and render sample documents using `puppeteer-core` on a non-root host.
+- [ ] Regenerate, validate, and commit `package-lock.json` after upgrading dependencies.
+- [ ] Re-run `npm run typecheck` after the security dependency upgrades (pre-upgrade test passed).
+- [ ] Re-run `npm test` and `npm run build` after the security dependency upgrades (pre-upgrade tests passed).
+- [x] Run real `md2pdf --check` and render a simple sample on Linux using Chromium 155 (pre-upgrade).
 - [ ] Inspect PDF pages and compare with sanitized Chrome Markdown Viewer references; verify wide table and multipage behavior.
 - [ ] Run `npm pack --dry-run`, then install the tarball and exercise both entry points.
 - [ ] Test native Windows (Edge), Linux (Chromium) and macOS (Chrome/Edge) before claiming those combinations verified.
 - [ ] Verify abort/timeouts, symlink asset restrictions, simultaneous writes, and no network egress under integration tests.
 - [ ] Confirm Pi's direct command behavior in both interactive and noninteractive modes.
-- [ ] Finalize transitive dependency and license review.
+- [ ] Confirm post-upgrade `npm audit` and `npm audit --omit=dev` results; finalize license review.
 - [ ] Remove `private: true`, tag and publish to npm **only after explicit release approval**.
 
 ## Immediate validation commands
