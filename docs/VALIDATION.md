@@ -147,6 +147,8 @@ Implemented on `feat/initial-implementation`:
 - Changed Chromium PDF margins from 15 mm to **10 mm** and stopped forcing all tables to full width (`width: auto; max-width: 100%`).
 - Added `tests/output.test.ts` for suffix selection, existing-file preservation, explicit overwrite, and eight simultaneous writes; extended integration, default-policy and print CSS tests.
 
+**Isolated smoke check:** An exact reproduction of `src/core/output.ts` was run locally with Node.js 22's TypeScript stripping: five concurrent publishes received distinct numbered filenames, the existing file was preserved, an explicit occupied filename was rejected, and an authorized overwrite succeeded. This is **not** a substitute for running the repository's full Vitest suite or Chromium integration tests.
+
 **Not yet verified:** The new source and tests were pushed, but post-change `npm run typecheck`, `npm test`, `npm run build`, `npm run pack:check`, and real Pi commands need a fresh local run. The current workspace has no cached npm dependencies or npm registry access, so full validation was unavailable; no GitHub Actions were invoked.
 
 Recommended local checks:
