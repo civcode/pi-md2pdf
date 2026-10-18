@@ -80,6 +80,13 @@ readability. Other long/wide documents may need separate review.
       validation. The owner chooses whether to accept that risk.
 - [ ] Verify a clean conversion from a local project using Pi's direct command
       and agent tool with current release-candidate artifacts.
+- [ ] Verify interactive `/md2pdf` completions in Pi for local Markdown files,
+      nested paths, filenames with spaces, `--toc`, `--number-sections`,
+      and `--paper a4|letter`. Verify Enter submits a complete command.
+- [ ] Verify Pi agent tool-call/result rendering shows the source and requested
+      flags, and reports the **actual** automatically numbered PDF filename.
+- [ ] Re-run the full test suite and package checks after the completion/UI
+      additions. Previous 40/40 Linux tests predate these changes.
 
 ## 4. Approval and publication (DO NOT EXECUTE YET)
 
