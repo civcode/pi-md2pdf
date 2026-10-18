@@ -28,6 +28,14 @@ export async function renderMarkdown(source: string, input: string, opts: Render
   const used = new Set<string>();
   const counters = [0, 0, 0, 0, 0, 0];
   const headings: RenderResult["headings"] = [];
+  // Existing structured section numbers belong to the author, not the converter.
+  // If a document is already numbered, adding generated prefixes would produce
+  // headings such as "1.1 1. Purpose" and obscure the original organization.
+  const hasExistingNumbering = tokens.some((token, index) =>
+    token.type === "heading_open" && tokens[index + 1]?.type === "inline" &&
+    /^\s*\d+(?:\.\d+)*\.?\s+\S/.test(tokens[index + 1]!.content),
+  );
+  const autoNumber = opts.numberSections && !hasExistingNumbering;
   for (let i = 0; i < tokens.length; i++) {
     const token = tokens[i]!;
     if (token.type !== "heading_open") continue;
@@ -41,7 +49,7 @@ export async function renderMarkdown(source: string, input: string, opts: Render
     used.add(id);
     token.attrSet("id", id);
     headings.push({ level, title, id });
-    if (opts.numberSections && level >= 1 && level <= 6) {
+    if (autoNumber && level >= 1 && level <= 6) {
       counters[level - 1]!++;
       counters.fill(0, level);
       const number = counters.slice(0, level).filter(n => n > 0).join(".");
