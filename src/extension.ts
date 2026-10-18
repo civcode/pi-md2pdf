@@ -16,7 +16,7 @@ export default function piMd2Pdf(pi: ExtensionAPI): void {
     handler: async (args, ctx) => {
       const report = (message: string, level: "info" | "warning" | "error") => {
         if (ctx.hasUI) ctx.ui.notify(message, level);
-        else process.stderr.write(message + "\\n");
+        else process.stderr.write(message + "\n");
       };
       try {
         const parsed = parseArgs(tokenizeCommand(args ?? ""), true);
