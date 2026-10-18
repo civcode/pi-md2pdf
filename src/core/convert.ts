@@ -13,8 +13,26 @@ function escapeHtml(value: string): string {
 }
 async function stylesheet(): Promise<string> {
   const github = require.resolve("github-markdown-css/github-markdown-light.css");
-  const print = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../styles/print.css");
-  return (await readFile(github, "utf8")) + "\n" + (await readFile(print, "utf8"));
+  const moduleDir = path.dirname(fileURLToPath(import.meta.url));
+  // tsup places the entry points in dist/; Vitest executes src/core/convert.ts directly.
+  // The CSS lives in styles/ at the package root in both cases.
+  const candidates = [
+    path.resolve(moduleDir, "../styles/print.css"),
+    path.resolve(moduleDir, "../../styles/print.css"),
+  ];
+  let printCss: string | undefined;
+  for (const candidate of candidates) {
+    try {
+      printCss = await readFile(candidate, "utf8");
+      break;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+    }
+  }
+  if (printCss === undefined) {
+    throw new Error("Print stylesheet missing; expected styles/print.css in the project or npm package");
+  }
+  return (await readFile(github, "utf8")) + "\n" + printCss;
 }
 export async function buildHtml(source: string, input: string, opts: { toc: boolean; numberSections: boolean }): Promise<string> {
   const rendered = await renderMarkdown(source, input, opts);
