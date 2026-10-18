@@ -77,18 +77,39 @@ git status --short
 
 Review and **commit the regenerated `package-lock.json`** after successful checks. Do not run `npm audit fix --force` indiscriminately. Changes remain on a draft PR, not on `main`.
 
+## Post-upgrade Linux validation (2026-10-18, successful)
+
+After upgrading the manifest to `puppeteer-core` ^25.14.0 and `vitest` ^5.0.5, the user ran `npm install` and the full local checks on Linux (`Chromium 155.0.8059.39 snap`).
+
+| Check | Result |
+| --- | --- |
+| `npm install` | Passed; 230 packages audited |
+| `npm run typecheck` | Passed |
+| `npm test` | **17/17 passed**, 7 test files, including headless PDF integration |
+| `npm run build` | Passed |
+| `npm run pack:check` | Passed; 10.9 kB compressed, 31.4 kB unpacked |
+| `node dist/cli.js --check` | Passed; Chromium 155 generated valid 8,896-byte test PDF |
+| `npm audit --omit=dev` | **0 production vulnerabilities** |
+| `npm audit` | **1 low-severity development advisory** in `esbuild` 0.27.3–0.28.0 |
+
+This supersedes the earlier *pre-upgrade* audit findings of 11 total and 7 production advisories. The remaining `esbuild` advisory concerns the development server on Windows; npm reports `npm audit fix` is available without `--force`. Do not claim it is fixed until a fresh audit confirms that.
+
+**Next work:** run non-force `npm audit fix`, verify no unintended updates, repeat local checks, then commit the npm-generated `package-lock.json` from the working machine. Install the actual tarball in a clean test directory and smoke-test both the packaged CLI and the Pi extension. Long/wide/multipage PDF fixtures and native Windows/macOS tests remain outstanding.
+
 ## Unverified / release blockers
 
 - [ ] Regenerate, validate, and commit `package-lock.json` after upgrading dependencies.
-- [ ] Re-run `npm run typecheck` after the security dependency upgrades (pre-upgrade test passed).
-- [ ] Re-run `npm test` and `npm run build` after the security dependency upgrades (pre-upgrade tests passed).
+- [x] Re-run `npm run typecheck` after the security dependency upgrades (passed on Linux).
+- [x] Re-run `npm test` and `npm run build` after the security dependency upgrades (17/17 tests passed on Linux).
 - [x] Run real `md2pdf --check` and render a simple sample on Linux using Chromium 155 (pre-upgrade).
 - [ ] Inspect PDF pages and compare with sanitized Chrome Markdown Viewer references; verify wide table and multipage behavior.
-- [ ] Run `npm pack --dry-run`, then install the tarball and exercise both entry points.
+- [x] Run `npm pack --dry-run` (passed).
+- [ ] Install the npm tarball in a clean environment and exercise both packaged entry points.
 - [ ] Test native Windows (Edge), Linux (Chromium) and macOS (Chrome/Edge) before claiming those combinations verified.
 - [ ] Verify abort/timeouts, symlink asset restrictions, simultaneous writes, and no network egress under integration tests.
 - [ ] Confirm Pi's direct command behavior in both interactive and noninteractive modes.
-- [ ] Confirm post-upgrade `npm audit` and `npm audit --omit=dev` results; finalize license review.
+- [x] Confirm post-upgrade audit: 0 production advisories, 1 low-severity development advisory.
+- [ ] Resolve remaining esbuild advisory (if compatible) and finalize license review.
 - [ ] Remove `private: true`, tag and publish to npm **only after explicit release approval**.
 
 ## Immediate validation commands
