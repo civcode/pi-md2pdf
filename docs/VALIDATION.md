@@ -164,6 +164,33 @@ node dist/cli.js --check
 
 For a no-clobber smoke test, convert the same Markdown file twice **without `-o`** in a temporary folder and verify that the two outputs are named `sample.pdf` and `sample-2.pdf`. Re-export the UWB specification to compare 10 mm margins and natural-width tables with the Chrome Markdown Viewer baseline (72 pages). Neither exact page-count equivalence nor native Windows/macOS output is verified yet.
 
+## Agent file-selection boundary (2026-10-18)
+
+The user reported a wrong-source conversion: from Pi's current directory
+`/tmp/pi-md2pdf-test`, the model ran a home-directory `find` command and
+selected `/home/chris/workspace/uwb_pico_client_server/uwb_pico_client_server_specification.md`,
+despite `uwb_pico_client_server_specification.md` already existing in Pi's
+current working directory. The extension accepted that absolute path.
+
+The feature branch now includes `src/core/workspace.ts` and uses it at the
+agent tool boundary. The guard resolves relative names only against
+`ctx.cwd`, rejects arbitrary external absolute paths and parent traversal,
+and checks real paths to prevent symlink-based workspace escape for both
+input and output. When the local file is missing, it reports the failure and
+does **not** search other directories. The model-facing tool description also
+explicitly prohibits home-directory / cross-project basename searches.
+
+Added `tests/workspace.test.ts` for duplicate basenames, missing local
+files, allowed subdirectories, traversal and symlinks, plus a tool-level
+regression in `tests/extension.test.ts`. Explicit cross-directory paths
+remain supported by user-entered `/md2pdf` and standalone CLI commands.
+
+**Validation required:** run `npm run typecheck`, `npm test`,
+`npm run build` on the feature branch, then start a new Pi session in a
+directory containing an `.md` file and confirm a plain conversion uses
+that exact file. Test an outside-workspace tool path and verify that
+conversion is rejected. No GitHub Actions required.
+
 ## Unverified / release blockers
 
 - [ ] Regenerate, validate, and commit `package-lock.json` after upgrading dependencies.
