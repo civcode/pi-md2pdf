@@ -89,12 +89,12 @@ md2pdf --version
 | Theme | GitHub Light |
 | Page size | A4 |
 | Margins | 10 mm on each side |
-| Output | Input basename with `.pdf` beside source file |
+| Output | First free input.pdf, input-2.pdf, input-3.pdf, ... beside source |
 | TOC | Disabled |
 | Automatic heading numbering | Disabled |
 | Print backgrounds | Enabled |
 | Browser mode | Headless only |
-| Existing destination | Reject / request confirmation in interactive Pi |
+| Existing destination | Implicit name: auto-increment; explicit name: reject or request confirmation in interactive Pi |
 | Remote resources | Disabled |
 
 TOC contains clickable heading links, **not printed page numbers**. TOC and numbering work independently. Heading anchors remain deterministic, including for duplicate headings.
