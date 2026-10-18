@@ -1,4 +1,4 @@
-import { readFile, lstat, mkdtemp, rm, rename, link } from "node:fs/promises";
+import { readFile, lstat, mkdtemp, rm } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
@@ -6,6 +6,7 @@ import puppeteer from "puppeteer-core";
 import { renderMarkdown } from "./markdown.js";
 import { DEFAULTS, prepareOptions, type ConversionOptions, type PreparedOptions } from "./options.js";
 import { resolveBrowser, browserVersion } from "./browser.js";
+import { publishPdf } from "./output.js";
 
 const require = createRequire(import.meta.url);
 function escapeHtml(value: string): string {
@@ -68,7 +69,7 @@ async function renderPdf(html: string, opts: PreparedOptions, pdfPath: string): 
     await page.emulateMediaType("print");
     if (opts.signal?.aborted) throw abortError(opts.signal);
     await page.pdf({ path: pdfPath, format: opts.paper === "a4" ? "A4" : "Letter",
-      margin: { top: "15mm", right: "15mm", bottom: "15mm", left: "15mm" },
+      margin: { top: "10mm", right: "10mm", bottom: "10mm", left: "10mm" },
       printBackground: true, timeout: opts.timeoutMs });
     if (opts.signal?.aborted) throw abortError(opts.signal);
   } finally {
@@ -81,11 +82,14 @@ export async function convertMarkdownToPdf(options: ConversionOptions): Promise<
   const opts = await prepareOptions(options);
   opts.signal = opts.signal ? AbortSignal.any([opts.signal, AbortSignal.timeout(opts.timeoutMs)]) : AbortSignal.timeout(opts.timeoutMs);
   if (opts.signal?.aborted) throw abortError(opts.signal);
+  // Automatic naming applies only when callers omit the output pathname.
+  // Explicit output names must never be silently renamed.
+  const increment = options.output === undefined && !opts.overwrite && DEFAULTS.outputConflict === "increment";
   const existing = await lstat(opts.output).then(() => true, (err: NodeJS.ErrnoException) => {
     if (err.code === "ENOENT") return false;
     throw err;
   });
-  if (existing && !opts.overwrite) throw new Error("Output already exists (use --force to overwrite): " + opts.output);
+  if (existing && !opts.overwrite && !increment) throw new Error("Output already exists (use --force to overwrite): " + opts.output);
   const browser = resolveBrowser(opts.browserPath);
   const source = await readFile(opts.input, "utf8");
   const html = await buildHtml(source, opts.input, opts);
@@ -99,15 +103,10 @@ export async function convertMarkdownToPdf(options: ConversionOptions): Promise<
       throw new Error("Browser returned an invalid PDF");
     }
     if (opts.signal?.aborted) throw abortError(opts.signal);
-    if (opts.overwrite) await rename(tempOutput, opts.output);
-    else {
-      try { await link(tempOutput, opts.output); }
-      catch (error) {
-        if ((error as NodeJS.ErrnoException).code === "EEXIST") throw new Error("Output already exists: " + opts.output);
-        throw error;
-      }
-    } // exclusive/atomic: never clobber an existing file
-    return { input: opts.input, output: opts.output, bytes: buffer.byteLength, browser };
+    const output = await publishPdf(tempOutput, opts.output, {
+      overwrite: opts.overwrite, increment, signal: opts.signal,
+    });
+    return { input: opts.input, output, bytes: buffer.byteLength, browser };
   } finally {
     await rm(tmp, { recursive: true, force: true });
   }
