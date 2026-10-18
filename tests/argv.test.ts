@@ -9,6 +9,9 @@ describe("command arguments", () => {
     const args = parseArgs(tokenizeCommand('"some report.md" "final report.pdf" --toc'), true);
     expect(args.options).toMatchObject({ input: "some report.md", output: "final report.pdf", toc: true });
   });
+  it("preserves native Windows paths", () => {
+    expect(tokenizeCommand('"C:\\\\Users\\\\Jane\\\\My Report.md"')).toEqual(["C:\\\\Users\\\\Jane\\\\My Report.md"]);
+  });
   it("rejects unknown flags and missing arguments", () => {
     expect(() => parseArgs(["-wat"])).toThrow("Unknown");
     expect(() => parseArgs([])).toThrow("Input");
