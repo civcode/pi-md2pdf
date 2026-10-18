@@ -5,7 +5,7 @@ import { Type } from "@earendil-works/pi-ai";
 import { defineTool, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { convertMarkdownToPdf } from "./core/convert.js";
 import { DEFAULTS } from "./core/options.js";
-import { HELP, parseArgs, tokenizeCommand } from "./core/argv.js";
+import { PI_HELP, parseArgs, tokenizeCommand } from "./core/argv.js";
 import { resolveWorkspacePaths } from "./core/workspace.js";
 import { getMd2pdfArgumentCompletions } from "./ui/completion.js";
 import { formatMd2pdfCall, formatMd2pdfResult } from "./ui/display.js";
@@ -30,8 +30,8 @@ export default function piMd2Pdf(pi: ExtensionAPI): void {
         else process.stderr.write(message + "\n");
       };
       try {
-        const parsed = parseArgs(tokenizeCommand(args ?? ""), true);
-        if (parsed.help) { report(HELP, "info"); return; }
+        const parsed = parseArgs(tokenizeCommand(args ?? ""), true, false);
+        if (parsed.help) { report(PI_HELP, "info"); return; }
         if (parsed.check || parsed.version) { report("For diagnostics use: md2pdf --check", "info"); return; }
         const options = parsed.options;
         options.input = path.resolve(ctx.cwd, options.input);
