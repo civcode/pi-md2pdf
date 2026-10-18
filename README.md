@@ -51,6 +51,7 @@ export const DEFAULTS = {
   toc: false,
   numberSections: false,
   overwrite: false,
+  outputConflict: "increment",
   theme: "github-light",
 } as const;
 ~~~
@@ -61,6 +62,27 @@ and parameter descriptions explain these defaults to the agent. For a normal
 Those features require an explicit request (`--toc` and `--number-sections`
 in the CLI or `toc: true` and `numberSections: true` in the agent tool).
 GitHub Light is the fixed theme in v1; there is no theme option to configure.
+
+### Automatic filenames without overwriting
+
+If the output path is omitted, the converter chooses an unused filename automatically:
+
+~~~text
+report.md → report.pdf
+report.md → report-2.pdf     (if report.pdf exists)
+report.md → report-3.pdf     (if both earlier filenames exist)
+~~~
+
+This is the `outputConflict: "increment"` default. It is enforced by the
+shared engine, including the agent tool and the direct Pi slash command;
+the agent does not need to ask for a new name. Two concurrent exports reserve
+different final filenames atomically.
+
+**Explicit output names are different:** `md2pdf report.md -o final.pdf`
+(or `/md2pdf report.md final.pdf`) will not silently change `final.pdf`
+to `final-2.pdf`. CLI/tool calls reject an occupied explicit filename unless
+overwrite was authorized (`--force` or `overwrite: true`).
+In interactive Pi, the slash command may confirm an explicit overwrite.
 
 Tool descriptions **guide** the LLM; they cannot mechanically prove user intent.
 If Pi incorrectly adds an option despite the descriptions, direct use of
@@ -87,7 +109,7 @@ On platforms without Segoe UI or Consolas, the same CSS falls back to available 
 
 | Option | Description |
 | --- | --- |
-| `-o, --output path` | PDF output (defaults beside Markdown input) |
+| `-o, --output path` | Explicit output; otherwise use next free input.pdf / input-2.pdf / ... |
 | `--paper a4\|letter` | Page size, A4 by default |
 | `--toc` | Clickable heading table of contents, without page numbers |
 | `--number-sections` | Auto-number headings |
@@ -115,7 +137,7 @@ No GitHub Actions workflow is required for local checks.
 
 ## Visual style
 
-The output uses the light [GitHub Markdown CSS](https://github.com/sindresorhus/github-markdown-css) with a print stylesheet for A4, tables, code blocks, and page breaks. Exact pagination may vary across platforms and browser builds.
+The output uses the light [GitHub Markdown CSS](https://github.com/sindresorhus/github-markdown-css) with a print stylesheet for A4, tables, code blocks, and page breaks. Default print margins are 10 mm; smaller tables use natural width rather than stretching across the page. Exact pagination may vary across platforms and browser builds.
 
 ## Security and privacy
 
