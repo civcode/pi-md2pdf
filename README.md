@@ -40,6 +40,34 @@ In Pi:
 
 Pi also exposes the `markdown_to_pdf` tool for agent-driven conversions. The slash command does **not** require a model call.
 
+### Shared v1 defaults (no Pi skill required)
+
+The CLI, Pi slash command, and agent-callable `markdown_to_pdf` tool all use
+`DEFAULTS` in `src/core/options.ts`:
+
+~~~typescript
+export const DEFAULTS = {
+  paper: "a4",
+  toc: false,
+  numberSections: false,
+  overwrite: false,
+  theme: "github-light",
+} as const;
+~~~
+
+Omitted options are normalized by the shared conversion engine. Pi's tool description
+and parameter descriptions explain these defaults to the agent. For a normal
+"convert this Markdown to PDF" request, **no TOC or new numbering is added**.
+Those features require an explicit request (`--toc` and `--number-sections`
+in the CLI or `toc: true` and `numberSections: true` in the agent tool).
+GitHub Light is the fixed theme in v1; there is no theme option to configure.
+
+Tool descriptions **guide** the LLM; they cannot mechanically prove user intent.
+If Pi incorrectly adds an option despite the descriptions, direct use of
+`/md2pdf input.md` or `md2pdf input.md` always applies the conservative defaults.
+No separate Pi skill is installed, loaded, or required.
+
+
 ### Matching Chrome Markdown Viewer output
 
 For an export that resembles the original Markdown Viewer printout, convert **without** `--toc` or `--number-sections`:
