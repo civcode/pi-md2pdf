@@ -1,7 +1,6 @@
 {
   "name": "pi-md2pdf",
   "version": "0.1.0",
-  "private": true,
   "description": "Beautiful, local GitHub-style Markdown to PDF exports for Pi and the terminal",
   "type": "module",
   "license": "MIT",
@@ -33,6 +32,8 @@
     "dist/",
     "styles/",
     "README.md",
+    "CHANGELOG.md",
+    "THIRD_PARTY_NOTICES.md",
     "LICENSE"
   ],
   "scripts": {
@@ -40,6 +41,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "lint": "tsc --noEmit",
+    "prepack": "npm run build",
     "pack:check": "npm pack --dry-run",
     "check:load": "node scripts/check-load.mjs",
     "check:package": "node scripts/check-package.mjs"
@@ -74,5 +76,8 @@
     "tsup": "^8.5.0",
     "typescript": "^5.9.2",
     "vitest": "^5.0.5"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
