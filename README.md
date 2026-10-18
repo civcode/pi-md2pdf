@@ -10,7 +10,7 @@
 - Google Chrome, Chromium, or Microsoft Edge installed and usable in headless mode.
 - For Pi integration, a current installation of [Pi Coding Agent](https://pi.dev/).
 
-Browser selection defaults to **Edge → Chrome → Chromium** on Windows, **Chromium → Chrome** on Linux, and **Chrome → Edge → Chromium** on macOS. Set `MD2PDF_BROWSER_PATH` to use a custom executable.
+Browser selection defaults to **Edge → Chrome → Chromium** on Windows, **Chromium → Chrome → Edge** on Linux, and **Chrome → Edge → Chromium** on macOS. Set `MD2PDF_BROWSER_PATH` to use a custom executable.
 
 ## Usage
 
@@ -19,7 +19,7 @@ After public npm publication (not available yet):
 ~~~sh
 npm install -g pi-md2pdf
 md2pdf report.md
-md2pdf report.md -o report.pdf --toc --number-sections
+md2pdf report.md -o report-with-toc.pdf --toc --number-sections
 md2pdf report.md --paper letter
 md2pdf --check
 ~~~
@@ -35,6 +35,7 @@ In Pi:
 ~~~text
 /md2pdf report.md
 /md2pdf "Monthly Report.md" "Monthly Report.pdf" --toc
+/md2pdf report.md --output custom-report.pdf
 /md2pdf report.md --toc --number-sections --paper a4
 ~~~
 
@@ -158,9 +159,12 @@ On platforms without Segoe UI or Consolas, the same CSS falls back to available 
 
 ## Options
 
+The standalone **CLI** accepts `-o` as shorthand for `--output`. The Pi **`/md2pdf` slash command intentionally does not accept `-o`**: use `--output path` or provide the PDF filename as the second positional argument instead.
+
 | Option | Description |
 | --- | --- |
-| `-o, --output path` | Explicit output; otherwise use next free input.pdf / input-2.pdf / ... |
+| `--output path` | Explicit PDF output (CLI and Pi); otherwise use the next free input.pdf / input-2.pdf / ... |
+| `-o path` | Short alias for `--output`, **standalone CLI only** (not accepted by `/md2pdf`) |
 | `--paper a4\|letter` | Page size, A4 by default |
 | `--toc` | Clickable heading table of contents, without page numbers |
 | `--number-sections` | Auto-number headings |
