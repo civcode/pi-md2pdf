@@ -1,4 +1,4 @@
-import { readdirSync, type Dirent } from "node:fs";
+import { readdirSync, realpathSync, type Dirent } from "node:fs";
 import path from "node:path";
 import type { AutocompleteItem } from "@earendil-works/pi-tui";
 
@@ -95,8 +95,13 @@ function markdownPathSuggestions(
   if (relative === ".." || relative.startsWith(".." + path.sep) || path.isAbsolute(relative)) return null;
 
   let entries: Dirent[];
-  try { entries = readdirSync(folder, { withFileTypes: true }); }
-  catch { return null; }
+  try {
+    const actualRoot = realpathSync(cwd);
+    const actualFolder = realpathSync(folder);
+    const within = path.relative(actualRoot, actualFolder);
+    if (within === ".." || within.startsWith(".." + path.sep) || path.isAbsolute(within)) return null;
+    entries = readdirSync(actualFolder, { withFileTypes: true });
+  } catch { return null; }
 
   const results: AutocompleteItem[] = [];
   for (const entry of entries) {
