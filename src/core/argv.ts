@@ -18,7 +18,8 @@ export function tokenizeCommand(input: string): string[] {
   if (active) args.push(part);
   return args;
 }
-export function parseArgs(argv: string[], allowPositionalOutput = false): ParsedArguments {
+/** The CLI retains -o; the Pi slash command deliberately does not. */
+export function parseArgs(argv: string[], allowPositionalOutput = false, allowShortOutput = true): ParsedArguments {
   const options: ConversionOptions = { input: "" };
   const files: string[] = [];
   let check = false, help = false, version = false;
@@ -30,6 +31,7 @@ export function parseArgs(argv: string[], allowPositionalOutput = false): Parsed
     if (flag === "--toc") { options.toc = true; continue; }
     if (flag === "--number-sections") { options.numberSections = true; continue; }
     if (flag === "--force") { options.overwrite = true; continue; }
+    if (flag === "-o" && !allowShortOutput) throw new Error("Unknown option: -o (use --output or a positional PDF filename)");
     if (["-o", "--output", "--paper", "--browser-path"].includes(flag)) {
       const next = argv[++i];
       if (!next) throw new Error("Missing value for " + flag);
@@ -68,4 +70,20 @@ Options:
 
 Default theme: ${DEFAULTS.theme}. Convert as-is unless options are requested.
 Environment: MD2PDF_BROWSER_PATH overrides automatic discovery.
+`;
+
+/** Slash-command help deliberately differs from CLI help: no -o shorthand. */
+export const PI_HELP = `Usage: /md2pdf input.md [output.pdf] [options]
+
+Options:
+      --output PATH      Explicit PDF filename (alternative to positional output)
+      --toc              Add linked table of contents (default: ${DEFAULTS.toc})
+      --number-sections  Add heading numbering (default: ${DEFAULTS.numberSections})
+      --paper a4|letter  Page format (default: ${DEFAULTS.paper})
+      --browser-path PATH  Chrome, Chromium or Edge executable
+      --force            Confirm/authorize overwrite of explicit output
+      --help             Show Pi slash-command help
+
+When output is omitted: input.pdf, then input-2.pdf, input-3.pdf, ...
+For browser diagnostics, run md2pdf --check in a terminal.
 `;
