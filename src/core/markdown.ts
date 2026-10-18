@@ -25,7 +25,7 @@ const md = new MarkdownIt({
 export async function renderMarkdown(source: string, input: string, opts: RenderOptions): Promise<RenderResult> {
   const env = {};
   const tokens = md.parse(source, env);
-  const used = new Map<string, number>();
+  const used = new Set<string>();
   const counters = [0, 0, 0, 0, 0, 0];
   const headings: RenderResult["headings"] = [];
   for (let i = 0; i < tokens.length; i++) {
@@ -35,9 +35,10 @@ export async function renderMarkdown(source: string, input: string, opts: Render
     if (!inline || inline.type !== "inline") continue;
     const level = Number(token.tag.slice(1));
     const title = inline.content;
-    const base = slug(title), seen = used.get(base) ?? 0;
-    used.set(base, seen + 1);
-    const id = seen ? base + "-" + seen : base;
+    const base = slug(title);
+    let id = base, suffix = 1;
+    while (used.has(id)) id = base + "-" + suffix++;
+    used.add(id);
     token.attrSet("id", id);
     headings.push({ level, title, id });
     if (opts.numberSections && level >= 1 && level <= 6) {
