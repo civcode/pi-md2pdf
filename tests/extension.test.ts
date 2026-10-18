@@ -20,9 +20,14 @@ describe("Pi agent tool documentation", () => {
     } as unknown as ExtensionAPI);
 
     expect(commands[0]?.name).toBe("md2pdf");
-    expect(commands[0]?.description).toContain(DEFAULTS.theme);
+    // The slash command description is intentionally concise and usage-first.
+    // The agent tool (not the command autocomplete) documents the fixed theme.
+    expect(commands[0]?.description).toContain("--toc");
+    expect(commands[0]?.description).toContain("--paper a4|letter");
+    expect(commands[0]?.description).toContain(`defaults: ${DEFAULTS.paper}, no TOC`);
     expect(tools[0]?.name).toBe("markdown_to_pdf");
     const description = tools[0]!.description;
+    expect(description).toContain(DEFAULTS.theme);
     expect(description).toContain(`paper=${DEFAULTS.paper}`);
     expect(description).toContain(`toc=${DEFAULTS.toc}`);
     expect(description).toContain(`numberSections=${DEFAULTS.numberSections}`);
