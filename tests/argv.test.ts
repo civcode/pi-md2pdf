@@ -10,6 +10,8 @@ describe("command arguments", () => {
     expect(HELP).toContain(`default: ${DEFAULTS.numberSections}`);
     expect(HELP).toContain(`default: ${DEFAULTS.overwrite}`);
     expect(HELP).toContain(DEFAULTS.theme);
+    expect(HELP).toContain("input-2.pdf, input-3.pdf");
+    expect(HELP).toContain("fail if occupied");
   });
   it("parses CLI flags", () => {
     const args = parseArgs(["report.md", "-o", "report.pdf", "--toc", "--paper", "letter", "--number-sections"]);
