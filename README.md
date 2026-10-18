@@ -40,6 +40,21 @@ In Pi:
 
 Pi also exposes the `markdown_to_pdf` tool for agent-driven conversions. The slash command does **not** require a model call.
 
+### Matching Chrome Markdown Viewer output
+
+For an export that resembles the original Markdown Viewer printout, convert **without** `--toc` or `--number-sections`:
+
+~~~sh
+md2pdf specification.md -o specification.pdf
+~~~
+
+In Pi, ask: *"Convert specification.md to PDF as-is; preserve the existing headings and don't add a table of contents or numbering."*
+
+`--toc` can add several pages to large documents (for example, a 200+ heading specification). When `--number-sections` is selected on an already-numbered document, the original author-provided numbering is preserved rather than duplicated.
+
+On platforms without Segoe UI or Consolas, the same CSS falls back to available system fonts. Exact font shapes, line breaks, and pagination may therefore still differ from Windows Chrome Markdown Viewer.
+
+
 ## Options
 
 | Option | Description |
