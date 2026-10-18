@@ -77,6 +77,7 @@ Set `QA_REPO=/absolute/path/to/pi-md2pdf` if the repository isn't at `~/workspac
 | A10 | Standalone CLI | `node dist/cli.js` generates a real PDF |
 | A11 | Explicit TOC and numbering | PDF conversion completes when flags are supplied |
 | A12 | Temporary-file cleanup | No orphaned `.md2pdf-*` directories remain |
+| A13 | Pi output syntax | Slash command rejects `-o` but accepts `--output` |
 
 These are integration checks rather than proof of the visual appearance of every page. A7 failure handling and A3 collision refusal are **successful tests when the requested operation is rejected safely**.
 
@@ -106,9 +107,10 @@ The runner launches Pi with `report.md`, `My Report.md`, `docs/nested.md`, and t
 ### C2. Option descriptions and paper sizes
 
 - [ ] Type `/md2pdf report.md --`. Look at the suggestion list.
-- [ ] Verify **`--output` is present** and **`-o` is not suggested**. The `-o` shorthand remains a valid parsed argument; only the redundant suggestion is removed.
+- [ ] Verify **`--output` is present** and **`-o` is not suggested**. The standalone CLI accepts `-o`, but the Pi slash command intentionally rejects it.
 - [ ] Verify the menu describes `--toc`, `--number-sections`, `--paper`, `--force` and `--browser-path`.
 - [ ] Type `/md2pdf report.md --paper ` and verify both `a4` and `letter` can be selected.
+- [ ] Submit `/md2pdf report.md -o rejected.pdf` and confirm it reports `Unknown option: -o` without creating that PDF.
 
 **Pass:** The menu is readable, contextual, and contains no redundant `-o` entry.
 
