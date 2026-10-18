@@ -24,6 +24,23 @@
 - Tried an independent Chromium headless `--print-to-pdf` smoke test: timed out after 30 seconds in this container. This is **not** a test of the packaged extension.
 - No GitHub Actions execution was used.
 
+## Linux tester results and follow-up (2026-10-18)
+
+A contributor tested the feature branch on a Linux machine:
+
+- `npm install`: **passed** (288 dependencies added).
+- `npm run typecheck`: one TypeScript error, missing `details` in a Pi tool `onUpdate` call.
+- `npm test`: **15 of 16 tests passed**. The browser integration test failed before conversion because the print stylesheet was incorrectly resolved as `src/styles/print.css`.
+- `npm install` audit summary: **11 advisories** (1 low, 1 moderate, 7 high, 2 critical). These are unresolved until `npm audit --json` and `npm audit --omit=dev` are evaluated; do not blindly use `npm audit fix --force`.
+
+Follow-up commits on the feature branch:
+
+- Added required `details` field to Pi progress updates.
+- Resolved print CSS relative to both `dist/` (compiled build) and `src/core/` (Vitest/source loading).
+- Added `tests/styles.test.ts` to catch print stylesheet loading regressions.
+
+**Validation still pending after those commits:** rerun `npm run typecheck`, `npm test`, `npm run build`, `npm run pack:check`, browser smoke test, and inspect an actual generated PDF. The above results refer to the version *before* the fixes and must not be presented as passing post-fix tests.
+
 ## Unverified / release blockers
 
 - [ ] Run `npm install` and commit the generated `package-lock.json`.
