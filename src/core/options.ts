@@ -13,6 +13,7 @@ export const DEFAULTS = {
   toc: false,
   numberSections: false,
   overwrite: false,
+  outputConflict: "increment",
   theme: "github-light",
 } as const;
 
