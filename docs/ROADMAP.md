@@ -5,6 +5,17 @@
 **Repository:** https://github.com/civcode/pi-md2pdf  
 **Normative scope:** [v1 Specification](SPECIFICATION.md)
 
+## Implementation status (2026-10-18)
+
+The `feat/initial-implementation` branch now contains the v1 source implementation, CLI, Pi integration, print CSS, test suites, fixtures, and documentation.
+
+- **Phases 0–1:** code/architecture and project structure prepared; dependency installation and package lockfile are pending.
+- **Phases 2–4:** renderer, CLI, and Pi extension implemented in source; **functional verification is pending**.
+- **Phase 5:** unit/integration tests authored, but the test suite and visual comparisons have **not** completed.
+- **Phase 6:** README, license, npm manifest and Pi package metadata prepared. Publishing, release tagging and npm gallery discovery are **not performed**.
+
+See [VALIDATION.md](VALIDATION.md) for the exact environment limitations and remaining release blockers. Do not interpret source completion as a verified v1 release.
+
 ## Delivery principles
 
 - One npm package; **one shared conversion engine** used by Pi's `/md2pdf` slash command, its `markdown_to_pdf` agent tool, and the standalone `md2pdf` CLI.
