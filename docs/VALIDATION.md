@@ -185,6 +185,8 @@ files, allowed subdirectories, traversal and symlinks, plus a tool-level
 regression in `tests/extension.test.ts`. Explicit cross-directory paths
 remain supported by user-entered `/md2pdf` and standalone CLI commands.
 
+**Isolated local smoke test:** A copy of `src/core/workspace.ts` was executed under Node 22's TypeScript stripping. It passed checks for local-basename selection, rejection of an absolute outside file, rejection of missing local files (without fallback), `../` traversal, symlinked input and output directory escapes, and a valid local explicit output. This is a module-level smoke test, not a Pi runtime or full Vitest run.
+
 **Validation required:** run `npm run typecheck`, `npm test`,
 `npm run build` on the feature branch, then start a new Pi session in a
 directory containing an `.md` file and confirm a plain conversion uses
