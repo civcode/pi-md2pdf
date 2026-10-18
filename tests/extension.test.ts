@@ -27,7 +27,7 @@ describe("Pi agent tool documentation", () => {
     expect(description).toContain("explicitly requests");
     expect(description).toContain("plain conversion");
     const schemaText = JSON.stringify(tools[0]!.parameters);
-    expect(schemaText).toContain("Only");
+    expect(schemaText).toContain("ONLY");
     expect(schemaText).toContain("user requests");
     expect(schemaText).toContain("authorization");
   });
