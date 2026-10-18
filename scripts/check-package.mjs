@@ -41,7 +41,7 @@ try {
   // Test the *real* packing path, including prepack. npm emits lifecycle
   // logs before its final filename, so parse the last nonempty output line.
   const output = npmRun(["pack", "--pack-destination", dest]);
-  const filename = output.trim().split(/\\r?\\n/).at(-1);
+  const filename = output.trim().split(/\r?\n/).at(-1);
   if (!filename || !/^pi-md2pdf-[0-9][a-zA-Z0-9.+-]*\\.tgz$/.test(filename)) {
     throw new Error("npm pack did not return the expected pi-md2pdf tarball name: " + filename);
   }
