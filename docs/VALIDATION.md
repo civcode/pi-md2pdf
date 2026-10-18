@@ -96,6 +96,32 @@ This supersedes the earlier *pre-upgrade* audit findings of 11 total and 7 produ
 
 **Next work:** run non-force `npm audit fix`, verify no unintended updates, repeat local checks, then commit the npm-generated `package-lock.json` from the working machine. Install the actual tarball in a clean test directory and smoke-test both the packaged CLI and the Pi extension. Long/wide/multipage PDF fixtures and native Windows/macOS tests remain outstanding.
 
+## Large-document visual comparison (2026-10-18)
+
+The user validated both Pi integration paths on Linux:
+
+- Direct Pi command `/md2pdf` generated a PDF (33,821 bytes).
+- Agent tool `markdown_to_pdf` generated a real UWB specification PDF (1,712,345 bytes). The invocation included `toc=true` and `numberSections=true` even though the user's natural-language request was only to convert.
+
+The original 3,447-line Markdown specification has 231 headings; about 200 already carry author-supplied numbering. Comparing the uploaded PDFs revealed:
+
+| Measure | Pi md2pdf before fixes | Chrome Markdown Viewer |
+| --- | ---: | ---: |
+| Pages | 82 | 72 |
+| Generated TOC | Nearly 6 pages; document starts on page 6 | None |
+| Heading example | `1.1 1. Purpose` (duplicate numbering) | `1. Purpose` |
+| Body font | Noto Sans ~9.8 pt | Segoe UI ~9.9 pt |
+| Fenced code font | Liberation Mono ~8.3 pt | Consolas ~9.9 pt |
+
+Fixes applied on the feature branch (not yet revalidated on user's machine):
+
+- Preserve already-numbered Markdown headings when `numberSections=true`; otherwise retain existing automatic numbering behavior.
+- Clarify agent-tool parameter descriptions: `toc` and `numberSections` must be enabled only if specifically requested, not for a routine conversion.
+- Tune GitHub Light print CSS to 13.2px body size and 1.5 line height; restore fenced code to 100% body size while keeping inline code slightly smaller.
+- Add numbered-heading, year-heading, and CSS typography regression tests; document an as-is export in README.
+
+**Verification needed:** pull feature branch, rerun local checks, generate the UWB file *without* TOC/numbering, inspect font sizes and resulting page count against the 72-page Chrome reference; also test `--toc --number-sections` for no double numbering. Full parity cannot be promised across Linux and Windows because fonts and browser builds differ.
+
 ## Unverified / release blockers
 
 - [ ] Regenerate, validate, and commit `package-lock.json` after upgrading dependencies.
