@@ -105,7 +105,7 @@ function markdownPathSuggestions(
     if (!entry.name.toLowerCase().startsWith(fragment.toLowerCase())) continue;
     // Deliberately do not follow symlinks, which could point outside cwd.
     const directory = entry.isDirectory();
-    if (!directory && !(entry.isFile() && /\.markdown?$/i.test(entry.name))) continue;
+    if (!directory && !(entry.isFile() && /\.(?:md|markdown)$/i.test(entry.name))) continue;
     const candidate = parent + entry.name + (directory ? "/" : "");
     if (candidate.toLowerCase() === normalized.toLowerCase()) continue;
     results.push({
