@@ -1,0 +1,7 @@
+node_modules/
+dist/
+coverage/
+*.pdf
+!tests/fixtures/*.pdf
+.env
+.DS_Store
