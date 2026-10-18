@@ -4,6 +4,30 @@
 **Branch:** `feat/initial-implementation`  
 **Status:** Linux development and package checks passed; not yet a cross-platform validated release.
 
+## Interactive Pi command UX (2026-10-18 — unverified on user host)
+
+Implemented on `feat/initial-implementation`:
+
+- `src/ui/completion.ts` provides `getArgumentCompletions` for local
+  Markdown file paths and folders, `--toc`, `--number-sections`,
+  `--paper a4|letter`, output/browser arguments and help; filters exact
+  tokens so Pi does not consume Enter instead of submitting the command.
+- `src/ui/display.ts` formats the agent tool's requested arguments and
+  actual PDF result. `src/extension.ts` supplies `renderCall` and
+  `renderResult`, with collapsed and expanded output behavior.
+- `@earendil-works/pi-tui` is a Pi-host-provided peer dependency rather
+  than a separately bundled UI runtime.
+- Tests cover quoted filenames, nested/local paths, symlink restrictions,
+  exact option/value matches, paper completions, and display formatting.
+- Completion uses the session cwd when available and falls back to
+  `process.cwd()` before session start.
+
+**Needs revalidation:** no complete TypeScript/Vitest/npm/Pi interactive run
+was available in this container. Run `npm ci`, typecheck, tests, build,
+`check:load`, `check:package`, and Pi interactive tests before release.
+No GitHub Actions were run. Existing Linux 40/40 baseline predates these UI
+changes.
+
 ## v0.1.0 release-candidate preparation (2026-10-18)
 
 The feature branch now has a release-focused manifest and documentation:
