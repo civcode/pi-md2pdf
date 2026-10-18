@@ -10,6 +10,7 @@ describe("options", () => {
       toc: false,
       numberSections: false,
       overwrite: false,
+      outputConflict: "increment",
       theme: "github-light",
     });
   });
