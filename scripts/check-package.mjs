@@ -38,9 +38,14 @@ function run(bin, args, cwd = project) {
 try {
   await mkdir(dest, { recursive: true });
   console.log("Packing pi-md2pdf into a temporary directory...");
-  const metadata = JSON.parse(npmRun(["pack", "--json", "--ignore-scripts", "--pack-destination", dest]));
-  if (!Array.isArray(metadata) || !metadata[0]?.filename) throw new Error("npm pack returned no tarball");
-  const tarball = path.join(dest, metadata[0].filename);
+  // Test the *real* packing path, including prepack. npm emits lifecycle
+  // logs before its final filename, so parse the last nonempty output line.
+  const output = npmRun(["pack", "--pack-destination", dest]);
+  const filename = output.trim().split(/\\r?\\n/).at(-1);
+  if (!filename || !/^pi-md2pdf-[0-9][a-zA-Z0-9.+-]*\\.tgz$/.test(filename)) {
+    throw new Error("npm pack did not return the expected pi-md2pdf tarball name: " + filename);
+  }
+  const tarball = path.join(dest, filename);
   await stat(tarball);
   // A normal consumer must be able to install *only* the published artifact.
   // Ignoring install scripts avoids arbitrary postinstall execution.
@@ -52,6 +57,15 @@ try {
   await stat(cli);
   await stat(path.join(packageRoot, "dist", "extension.js"));
   await stat(path.join(packageRoot, "styles", "print.css"));
+  for (const file of ["LICENSE", "CHANGELOG.md", "THIRD_PARTY_NOTICES.md", "README.md"]) {
+    await stat(path.join(packageRoot, file));
+  }
+  const manifest = JSON.parse(await readFile(path.join(packageRoot, "package.json"), "utf8"));
+  if (manifest.private === true || manifest.version !== "0.1.0" ||
+      manifest.bin?.md2pdf !== "./dist/cli.js" ||
+      !manifest.pi?.extensions?.includes("./dist/extension.js")) {
+    throw new Error("Packed npm/Pi manifest differs from expected release candidate");
+  }
   const help = run(process.execPath, [cli, "--help"], temp);
   if (!help.includes("md2pdf input.md")) throw new Error("Packed CLI help is missing");
 
