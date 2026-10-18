@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { HELP, parseArgs, tokenizeCommand } from "../src/core/argv.js";
+import { HELP, PI_HELP, parseArgs, tokenizeCommand } from "../src/core/argv.js";
 import { DEFAULTS } from "../src/core/options.js";
 describe("command arguments", () => {
   it("leaves absent CLI options unset for shared normalization", () => {
@@ -17,6 +17,19 @@ describe("command arguments", () => {
     const args = parseArgs(["report.md", "-o", "report.pdf", "--toc", "--paper", "letter", "--number-sections"]);
     expect(args.options).toMatchObject({ input: "report.md", output: "report.pdf", paper: "letter", toc: true, numberSections: true });
   });
+  it("accepts -o for the CLI but rejects it for the Pi slash command", () => {
+    expect(parseArgs(["report.md", "-o", "cli.pdf"]).options.output).toBe("cli.pdf");
+    expect(() => parseArgs(["report.md", "-o", "pi.pdf"], true, false))
+      .toThrow(/Unknown option: -o/);
+    expect(parseArgs(["report.md", "--output", "pi.pdf"], true, false).options.output)
+      .toBe("pi.pdf");
+    expect(parseArgs(["report.md", "pi.pdf"], true, false).options.output)
+      .toBe("pi.pdf");
+    expect(PI_HELP).toContain("--output PATH");
+    expect(PI_HELP).not.toMatch(/(?:^|\\s)-o(?:\\s|,|$)/);
+    expect(HELP).toContain("-o, --output");
+  });
+
   it("parses quoted Pi command paths", () => {
     const args = parseArgs(tokenizeCommand('"some report.md" "final report.pdf" --toc'), true);
     expect(args.options).toMatchObject({ input: "some report.md", output: "final report.pdf", toc: true });
