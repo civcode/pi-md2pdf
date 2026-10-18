@@ -88,7 +88,7 @@ md2pdf --version
 | --- | --- |
 | Theme | GitHub Light |
 | Page size | A4 |
-| Margins | 15 mm on each side |
+| Margins | 10 mm on each side |
 | Output | Input basename with `.pdf` beside source file |
 | TOC | Disabled |
 | Automatic heading numbering | Disabled |
@@ -109,11 +109,18 @@ export const DEFAULTS = {
   toc: false,
   numberSections: false,
   overwrite: false,
+  outputConflict: "increment",
   theme: "github-light",
 } as const;
 ~~~
 
-The core options normalizer applies these defaults to omitted values. CLI help,
+The core options normalizer applies these defaults to omitted values.
+When a caller omits the output filename and the derived .pdf exists, the
+converter MUST atomically select `-2`, `-3`, etc. without a confirmation.
+Explicit output path collisions MUST fail unless overwrite is authorized;
+interactive Pi MAY ask confirmation for an explicitly supplied destination.
+Concurrent conversions MUST reserve distinct filenames. Overwrite remains false
+by default. CLI help,
 Pi command description, and agent-tool parameter descriptions MUST reflect the
 same values rather than repeating independent literal defaults.
 
@@ -154,7 +161,7 @@ Render a self-contained HTML document via the browser API, not a local HTTP serv
 **Required:** headings H1–H6, paragraphs, inline emphasis, ordered/unordered lists, links, blockquotes, thematic rules, fenced code, syntax highlighting, inline code, GitHub-style pipe tables, local images (PNG/JPEG/WebP), Unicode, and German diacritics.
 
 **Required printing behavior:**
-- Thin borders and alternating shading for tables; repeat table headers where the renderer permits.
+- Thin borders, natural/content-dependent table widths and alternating shading for tables; repeat table headers where the renderer permits.
 - Avoid heading orphans and unwanted splits through code blocks and table rows where practical.
 - Wrap long code/table content sensibly; no off-page content in reference fixtures.
 - Preserve print backgrounds so table stripes and code backgrounds appear in the PDF.
