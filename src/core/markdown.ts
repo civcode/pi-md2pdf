@@ -1,6 +1,6 @@
 import MarkdownIt from "markdown-it";
 import hljs from "highlight.js";
-import type Token from "markdown-it/lib/token.mjs";
+import Token from "markdown-it/lib/token.mjs";
 import { inlineLocalImages } from "./assets.js";
 
 export interface RenderOptions { toc: boolean; numberSections: boolean }
@@ -44,7 +44,15 @@ export async function renderMarkdown(source: string, input: string, opts: Render
       counters[level - 1]!++;
       counters.fill(0, level);
       const number = counters.slice(0, level).filter(n => n > 0).join(".");
-      inline.children?.unshift(Object.assign(new (inline.constructor as typeof Token)("text", "", 0), { content: number + " " }));
+      const label = new Token("text", "", 0); label.content = number + " ";
+      inline.children?.unshift(label);
+    }
+  }
+  for (const token of tokens) {
+    for (const child of token.children ?? []) {
+      if (child.type !== "link_open") continue;
+      const href = child.attrGet("href") ?? "";
+      if (!/^(https?:\/\/|mailto:|#)/i.test(href)) throw new Error("Unsupported hyperlink target: " + href);
     }
   }
   await inlineLocalImages(tokens, input);
