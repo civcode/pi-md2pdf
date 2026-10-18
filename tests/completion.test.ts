@@ -90,6 +90,9 @@ describe("Pi /md2pdf argument completion", () => {
       await symlink(external, path.join(cwd, "shortcut"));
       expect((getMd2pdfArgumentCompletions("short", cwd) ?? []).map(x => x.value))
         .not.toContain("shortcut/");
+      // An explicit token must not allow the completion callback to follow
+      // an external symlink even if the initial directory menu omitted it.
+      expect(getMd2pdfArgumentCompletions("shortcut/sec", cwd)).toBeNull();
     } finally {
       await rm(cwd, { recursive: true, force: true });
       await rm(external, { recursive: true, force: true });
