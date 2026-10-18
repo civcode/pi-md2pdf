@@ -1,4 +1,4 @@
-import { readdirSync } from "node:fs";
+import { readdirSync, type Dirent } from "node:fs";
 import path from "node:path";
 import type { AutocompleteItem } from "@earendil-works/pi-tui";
 
@@ -94,7 +94,7 @@ function markdownPathSuggestions(
   const relative = path.relative(path.resolve(cwd), folder);
   if (relative === ".." || relative.startsWith(".." + path.sep) || path.isAbsolute(relative)) return null;
 
-  let entries: ReturnType<typeof readdirSync>;
+  let entries: Dirent[];
   try { entries = readdirSync(folder, { withFileTypes: true }); }
   catch { return null; }
 
@@ -114,7 +114,7 @@ function markdownPathSuggestions(
       description: directory ? "Directory" : "Local Markdown file",
     });
   }
-  return results.length ? results.sort((a, b) => a.label!.localeCompare(b.label!)) : null;
+  return results.length ? results.sort((a, b) => (a.label ?? a.value).localeCompare(b.label ?? b.value)) : null;
 }
 
 /**
