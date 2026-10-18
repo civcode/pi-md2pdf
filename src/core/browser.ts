@@ -14,11 +14,11 @@ function pathsInEnvironment(name: string): string[] {
 function candidates(platform = process.platform, env = process.env): string[] {
   if (platform === "win32") {
     const roots = [env.PROGRAMFILES, env["PROGRAMFILES(X86)"], env.LOCALAPPDATA].filter((v): v is string => !!v);
-    return roots.flatMap(root => [
-      path.join(root, "Microsoft", "Edge", "Application", "msedge.exe"),
-      path.join(root, "Google", "Chrome", "Application", "chrome.exe"),
-      path.join(root, "Chromium", "Application", "chrome.exe"),
-    ]);
+    return [
+      ["Microsoft", "Edge", "Application", "msedge.exe"],
+      ["Google", "Chrome", "Application", "chrome.exe"],
+      ["Chromium", "Application", "chrome.exe"],
+    ].flatMap(parts => roots.map(root => path.join(root, ...parts)));
   }
   if (platform === "darwin") {
     return [
