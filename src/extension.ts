@@ -43,13 +43,13 @@ export default function piMd2Pdf(pi: ExtensionAPI): void {
   pi.registerTool(defineTool({
     name: "markdown_to_pdf",
     label: "Markdown to PDF",
-    description: "Convert a local Markdown file to a polished offline GitHub-style PDF. Existing PDFs are protected unless overwrite is explicitly true.",
+    description: "Convert local Markdown to a GitHub-style PDF. For ordinary conversion, omit toc and numberSections so the original document looks like Markdown Viewer. Only enable these formatting changes when the user explicitly requests them. Existing PDFs require explicit overwrite permission.",
     parameters: Type.Object({
       input: Type.String({ description: "Markdown source path" }),
       output: Type.Optional(Type.String({ description: "PDF destination path; defaults beside source" })),
       paper: Type.Optional(Type.Union([Type.Literal("a4"), Type.Literal("letter")])),
-      toc: Type.Optional(Type.Boolean()),
-      numberSections: Type.Optional(Type.Boolean()),
+      toc: Type.Optional(Type.Boolean({ description: "Add a potentially long table of contents ONLY if explicitly requested; otherwise omit (default false)." })),
+      numberSections: Type.Optional(Type.Boolean({ description: "Add section numbers ONLY when explicitly requested. Documents with existing section numbering keep their original numbers. Default false." })),
       overwrite: Type.Optional(Type.Boolean({ description: "Overwrite existing output only if explicitly authorized" })),
     }),
     async execute(_toolCallId, params, signal, onUpdate, ctx) {
