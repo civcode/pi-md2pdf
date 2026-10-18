@@ -25,16 +25,19 @@ export async function buildHtml(source: string, input: string, opts: { toc: bool
     "<title>" + escapeHtml(title) + "</title><style>" + css + "</style></head>" +
     '<body class="markdown-body">' + rendered.html + "</body></html>";
 }
-function abortError(): Error { return Object.assign(new Error("PDF conversion cancelled"), { name: "AbortError" }); }
+function abortError(signal?: AbortSignal): Error {
+  const timedOut = (signal?.reason as { name?: string } | undefined)?.name === "TimeoutError";
+  return Object.assign(new Error(timedOut ? "PDF conversion timed out" : "PDF conversion cancelled"), { name: timedOut ? "TimeoutError" : "AbortError" });
+}
 async function renderPdf(html: string, opts: PreparedOptions, pdfPath: string): Promise<void> {
   const browserPath = resolveBrowser(opts.browserPath);
-  if (opts.signal?.aborted) throw abortError();
+  if (opts.signal?.aborted) throw abortError(opts.signal);
   const browser = await puppeteer.launch({ executablePath: browserPath, headless: true,
     timeout: Math.min(opts.timeoutMs, 30_000), args: ["--no-first-run", "--disable-extensions"] });
   const onAbort = () => { void browser.close(); };
   opts.signal?.addEventListener("abort", onAbort, { once: true });
   try {
-    if (opts.signal?.aborted) throw abortError();
+    if (opts.signal?.aborted) throw abortError(opts.signal);
     const page = await browser.newPage();
     await page.setJavaScriptEnabled(false);
     await page.setRequestInterception(true);
@@ -45,11 +48,11 @@ async function renderPdf(html: string, opts: PreparedOptions, pdfPath: string): 
     page.setDefaultTimeout(opts.timeoutMs);
     await page.setContent(html, { waitUntil: "load", timeout: opts.timeoutMs });
     await page.emulateMediaType("print");
-    if (opts.signal?.aborted) throw abortError();
+    if (opts.signal?.aborted) throw abortError(opts.signal);
     await page.pdf({ path: pdfPath, format: opts.paper === "a4" ? "A4" : "Letter",
       margin: { top: "15mm", right: "15mm", bottom: "15mm", left: "15mm" },
       printBackground: true, timeout: opts.timeoutMs });
-    if (opts.signal?.aborted) throw abortError();
+    if (opts.signal?.aborted) throw abortError(opts.signal);
   } finally {
     opts.signal?.removeEventListener("abort", onAbort);
     await browser.close().catch(() => {});
@@ -58,7 +61,8 @@ async function renderPdf(html: string, opts: PreparedOptions, pdfPath: string): 
 export interface ConversionResult { input: string; output: string; bytes: number; browser: string }
 export async function convertMarkdownToPdf(options: ConversionOptions): Promise<ConversionResult> {
   const opts = await prepareOptions(options);
-  if (opts.signal?.aborted) throw abortError();
+  opts.signal = opts.signal ? AbortSignal.any([opts.signal, AbortSignal.timeout(opts.timeoutMs)]) : AbortSignal.timeout(opts.timeoutMs);
+  if (opts.signal?.aborted) throw abortError(opts.signal);
   const existing = await lstat(opts.output).then(() => true, (err: NodeJS.ErrnoException) => {
     if (err.code === "ENOENT") return false;
     throw err;
@@ -67,6 +71,7 @@ export async function convertMarkdownToPdf(options: ConversionOptions): Promise<
   const browser = resolveBrowser(opts.browserPath);
   const source = await readFile(opts.input, "utf8");
   const html = await buildHtml(source, opts.input, opts);
+  if (opts.signal?.aborted) throw abortError(opts.signal);
   const tmp = await mkdtemp(path.join(path.dirname(opts.output), ".md2pdf-"));
   const tempOutput = path.join(tmp, "rendered.pdf");
   try {
@@ -75,7 +80,7 @@ export async function convertMarkdownToPdf(options: ConversionOptions): Promise<
     if (buffer.byteLength < 5 || buffer.subarray(0, 5).toString("ascii") !== "%PDF-") {
       throw new Error("Browser returned an invalid PDF");
     }
-    if (opts.signal?.aborted) throw abortError();
+    if (opts.signal?.aborted) throw abortError(opts.signal);
     if (opts.overwrite) await rename(tempOutput, opts.output);
     else {
       try { await link(tempOutput, opts.output); }
