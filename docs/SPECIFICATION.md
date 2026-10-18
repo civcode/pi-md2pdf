@@ -47,6 +47,16 @@ Mermaid rendering, LaTeX/KaTeX math, remote images, custom themes/templates, cus
 - In interactive Pi sessions only, may request confirmation before replacing a PDF. In non-interactive modes, existing outputs are rejected rather than overwritten.
 - Parses quoted paths/filenames with spaces without passing input through a shell.
 
+#### Interactive command completion
+
+`/md2pdf` provides Pi-native `getArgumentCompletions`:
+- Suggest `.md` and `.markdown` files and directories from the active session working directory.
+- Support partial and quoted paths, spaces in filenames and nested paths.
+- Suggest supported flags with short descriptions and the values `a4` / `letter` after `--paper`.
+- Preserve already typed command arguments; never offer an exact completed option/token so Enter can submit it.
+- Do not search outside the working directory or follow symlinked directories in completion.
+- Do not require a separate skill, persistent UI, or additional PDF runtime.
+
 ### 3.2 Agent-callable tool
 
 Register `markdown_to_pdf` with a structured input containing:
