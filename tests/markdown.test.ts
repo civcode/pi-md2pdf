@@ -12,7 +12,7 @@ describe("Markdown HTML", () => {
     expect(result.html).toContain("1.1 Part");
   });
   it("handles different headings with colliding generated slugs", async () => {
-    const result = await renderMarkdown("# Part\\n# Part-1\\n# Part", "/tmp/test.md", { toc: true, numberSections: false });
+    const result = await renderMarkdown("# Part\n# Part-1\n# Part", "/tmp/test.md", { toc: true, numberSections: false });
     expect(result.headings.map(h => h.id)).toEqual(["part", "part-1", "part-2"]);
   });
   it("escapes raw HTML", async () => {
