@@ -31,8 +31,9 @@ Do not use GitHub Actions to perform local checks or publication.
 ## 2. Required local release-candidate verification
 
 For real Pi CLI, JSON agent and SSH/tmux acceptance testing, follow
-[the Linux end-to-end QA checklist](LINUX_E2E_QA.md). These user-facing
-checks complement (and do not replace) the automated unit and package checks.
+[the Linux test procedure with interactive steps](TESTING.md) and its
+[acceptance-test inventory](LINUX_E2E_QA.md). These user-facing checks
+complement (and do not replace) the automated unit and package checks.
 
 
 
