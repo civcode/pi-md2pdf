@@ -6,7 +6,6 @@ const FLAGS: AutocompleteItem[] = [
   { value: "--toc", label: "--toc", description: "Add linked table of contents (off by default)" },
   { value: "--number-sections", label: "--number-sections", description: "Add heading numbers (off by default)" },
   { value: "--paper", label: "--paper", description: "Paper size: a4 (default) or letter" },
-  { value: "-o", label: "-o", description: "Explicit PDF output filename" },
   { value: "--output", label: "--output", description: "Explicit PDF output filename" },
   { value: "--browser-path", label: "--browser-path", description: "Use a particular Chromium/Chrome/Edge binary" },
   { value: "--force", label: "--force", description: "Overwrite an explicit output (use cautiously)" },
