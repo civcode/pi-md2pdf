@@ -2,7 +2,37 @@
 
 **Date:** 2026-10-18  
 **Branch:** `feat/initial-implementation`  
-**Status:** Code committed; not a validated release.
+**Status:** Linux development and package checks passed; not yet a cross-platform validated release.
+
+## Current validation — Linux, 2026-10-18 (post-hardening)
+
+**Outcome:** All local Linux v1 code/package verification checks passed on the
+`feat/initial-implementation` feature branch after `git pull --ff-only`
+and a clean `npm ci`. This supersedes the *pending* status in earlier
+historical entries below.
+
+| Command | Result |
+| --- | --- |
+| `npm ci` | Passed (231 packages installed; 1 low development advisory) |
+| `npm run typecheck` | Passed |
+| `npm test` | **40/40 tests passed** across 12 files; includes headless Chromium integration |
+| `npm run build` | Passed, ESM CLI + extension + shared chunk |
+| `npm run check:load` | Passed; real Pi loader registered `/md2pdf` and `markdown_to_pdf` |
+| `npm run check:package` | Passed; fresh temporary npm tarball install, real Pi loader, and **14,333-byte PDF** |
+| `npm run pack:check` | Passed; tarball 14.7 kB compressed / 43.0 kB unpacked, 7 files |
+| `npm audit --omit=dev` | **0 production vulnerabilities** |
+
+The clean package install test verifies an actual packed CLI and Pi extension,
+not just source imports. The test suite includes cancellation/failure cases,
+concurrent output naming, workspace path boundaries, and Windows-style
+path normalization.
+
+**Still open:** One low-severity development dependency advisory persists
+during `npm ci`; the full audit has not been rerun in this supplied batch.
+Windows and macOS have path-unit coverage but no native runtime verification.
+Multipage/table visual-fidelity comparison, native platform browser checks,
+and approval for npm publishing remain separate release gates. Do not infer
+that mock failure-path tests prove behavior under every real Chromium crash.
 
 ## What was completed
 
@@ -232,13 +262,13 @@ npm audit --omit=dev
 
 ## Unverified / release blockers
 
-- [ ] Regenerate, validate, and commit `package-lock.json` after upgrading dependencies.
+- [x] Track `package-lock.json` for reproducible `npm ci` (passed on Linux).
 - [x] Re-run `npm run typecheck` after the security dependency upgrades (passed on Linux).
 - [x] Re-run `npm test` and `npm run build` after the security dependency upgrades (17/17 tests passed on Linux).
 - [x] Run real `md2pdf --check` and render a simple sample on Linux using Chromium 155 (pre-upgrade).
 - [ ] Inspect PDF pages and compare with sanitized Chrome Markdown Viewer references; verify wide table and multipage behavior.
 - [x] Run `npm pack --dry-run` (passed).
-- [ ] Install the npm tarball in a clean environment and exercise both packaged entry points.
+- [x] Install the npm tarball in a clean environment and exercise both packaged entry points (real Pi loader + CLI PDF passed on Linux).
 - [ ] Test native Windows (Edge), Linux (Chromium) and macOS (Chrome/Edge) before claiming those combinations verified.
 - [ ] Verify abort/timeouts, symlink asset restrictions, simultaneous writes, and no network egress under integration tests.
 - [ ] Confirm Pi's direct command behavior in both interactive and noninteractive modes.
