@@ -1,4 +1,4 @@
-import type { ConversionOptions } from "./options.js";
+import { DEFAULTS, type ConversionOptions } from "./options.js";
 export interface ParsedArguments { options: ConversionOptions; check?: boolean; help?: boolean; version?: boolean }
 export function tokenizeCommand(input: string): string[] {
   const args: string[] = []; let part = ""; let quote: "'" | '"' | null = null; let active = false;
@@ -57,14 +57,15 @@ export const HELP = `Usage: md2pdf input.md [-o output.pdf] [options]
 
 Options:
   -o, --output PATH      Destination (default: input.pdf beside input)
-      --toc              Generate linked table of contents
-      --number-sections  Number headings
-      --paper a4|letter  Page format (default: a4)
+      --toc              Add linked table of contents (default: ${DEFAULTS.toc})
+      --number-sections  Add heading numbering (default: ${DEFAULTS.numberSections})
+      --paper a4|letter  Page format (default: ${DEFAULTS.paper})
       --browser-path PATH  Chrome, Chromium or Edge executable
-      --force            Overwrite output (never implicit)
+      --force            Overwrite output (default: ${DEFAULTS.overwrite})
       --check            Test headless browser PDF rendering
   -h, --help             Show help
   -v, --version          Show version
 
+Default theme: ${DEFAULTS.theme}. Convert as-is unless options are requested.
 Environment: MD2PDF_BROWSER_PATH overrides automatic discovery.
 `;
