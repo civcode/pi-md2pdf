@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
 import puppeteer from "puppeteer-core";
 import { renderMarkdown } from "./markdown.js";
-import { prepareOptions, type ConversionOptions, type PreparedOptions } from "./options.js";
+import { DEFAULTS, prepareOptions, type ConversionOptions, type PreparedOptions } from "./options.js";
 import { resolveBrowser, browserVersion } from "./browser.js";
 
 const require = createRequire(import.meta.url);
@@ -38,7 +38,7 @@ export async function buildHtml(source: string, input: string, opts: { toc: bool
   const rendered = await renderMarkdown(source, input, opts);
   const css = (await stylesheet()).replace(/<\/style/gi, "<\\/style");
   const title = path.basename(input).replace(/\.(md|markdown)$/i, "");
-  return "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\">" +
+  return "<!doctype html><html lang=\"en\" data-md2pdf-theme=\"" + DEFAULTS.theme + "\"><head><meta charset=\"utf-8\">" +
     "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">" +
     "<title>" + escapeHtml(title) + "</title><style>" + css + "</style></head>" +
     '<body class="markdown-body">' + rendered.html + "</body></html>";
