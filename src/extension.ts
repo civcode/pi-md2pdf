@@ -53,7 +53,7 @@ export default function piMd2Pdf(pi: ExtensionAPI): void {
       overwrite: Type.Optional(Type.Boolean({ description: "Overwrite existing output only if explicitly authorized" })),
     }),
     async execute(_toolCallId, params, signal, onUpdate, ctx) {
-      onUpdate?.({ content: [{ type: "text", text: "Rendering Markdown PDF…" }] });
+      onUpdate?.({ content: [{ type: "text", text: "Rendering Markdown PDF…" }], details: { status: "rendering" } });
       const result = await convertMarkdownToPdf({
         input: path.resolve(ctx.cwd, params.input),
         output: params.output ? path.resolve(ctx.cwd, params.output) : undefined,
