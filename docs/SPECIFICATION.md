@@ -62,6 +62,24 @@ Register `markdown_to_pdf` with a structured input containing:
 
 The tool returns the final PDF path and concise success/error information. It does not ask interactive questions; the calling agent must obtain permission before opting into an overwrite. Tool execution supports cancellation where Pi provides an abort signal.
 
+#### Agent-tool input path policy
+
+The `markdown_to_pdf` **agent tool** must resolve input names against
+`ctx.cwd`, without searching parents, a home folder, or other repositories.
+A basename refers only to the file in that working directory. If missing,
+return a useful "not found here" message rather than discovering a different
+same-named file.
+
+For safety, its input and output paths must stay under the current working
+directory, including after resolving symlinks. Absolute paths are accepted
+only when inside that directory. The tool refuses external paths rather than
+silently using them, even if supplied by the model. The tool description
+instructs Pi not to run broad filesystem searches for a basename.
+
+The direct, user-entered `/md2pdf` slash command and the standalone CLI are
+intentionally not subject to that restriction: explicit absolute paths are
+supported for deliberate cross-directory conversions.
+
 ### 3.3 Standalone CLI
 
 ~~~sh
