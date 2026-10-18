@@ -2,7 +2,7 @@
 html { background: #fff; }
 body.markdown-body { box-sizing: border-box; margin: 0; padding: 0; color: #1f2328;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
-  font-size: 13px; line-height: 1.55; max-width: none; }
+  font-size: 13.2px; line-height: 1.5; max-width: none; }
 .markdown-body h1 { font-size: 2em; }
 .markdown-body h2 { font-size: 1.5em; }
 .markdown-body h3 { font-size: 1.25em; }
@@ -17,7 +17,10 @@ body.markdown-body { box-sizing: border-box; margin: 0; padding: 0; color: #1f23
 .markdown-body pre, .markdown-body .hljs { background: #f6f8fa; color: #1f2328;
   border-radius: 6px; white-space: pre-wrap; overflow-wrap: anywhere; }
 .markdown-body pre { break-inside: avoid; }
-.markdown-body code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; font-size: .9em; }
+.markdown-body code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; font-size: .85em; }
+/* GitHub/Markdown Viewer keeps fenced code at body size; inline code is smaller. */
+.markdown-body pre { font-size: 100%; }
+.markdown-body pre code { font-size: 100%; }
 .markdown-body img { max-width: 100%; max-height: 235mm; object-fit: contain; }
 .markdown-body blockquote { color: #59636e; border-left: .25em solid #d1d9e0; }
 .markdown-body a { color: #0969da; overflow-wrap: anywhere; }
