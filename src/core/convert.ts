@@ -53,7 +53,7 @@ async function renderPdf(html: string, opts: PreparedOptions, pdfPath: string): 
   if (opts.signal?.aborted) throw abortError(opts.signal);
   const browser = await puppeteer.launch({ executablePath: browserPath, headless: true,
     timeout: Math.min(opts.timeoutMs, 30_000), args: ["--no-first-run", "--disable-extensions"] });
-  const onAbort = () => { void browser.close(); };
+  const onAbort = () => { void browser.close().catch(() => {}); };
   opts.signal?.addEventListener("abort", onAbort, { once: true });
   try {
     if (opts.signal?.aborted) throw abortError(opts.signal);
@@ -72,6 +72,11 @@ async function renderPdf(html: string, opts: PreparedOptions, pdfPath: string): 
       margin: { top: "10mm", right: "10mm", bottom: "10mm", left: "10mm" },
       printBackground: true, timeout: opts.timeoutMs });
     if (opts.signal?.aborted) throw abortError(opts.signal);
+  } catch (error) {
+    // Browser closure during cancellation can surface as "Target closed".
+    // Report the original abort/timeout instead of a misleading browser error.
+    if (opts.signal?.aborted) throw abortError(opts.signal);
+    throw error;
   } finally {
     opts.signal?.removeEventListener("abort", onAbort);
     await browser.close().catch(() => {});
