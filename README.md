@@ -2,7 +2,7 @@
 
 **GitHub-style Markdown → PDF**, for Pi Coding Agent and any terminal. One shared TypeScript renderer, two entry points, and an existing headless Chrome/Chromium/Edge browser. No browser download, GUI or network upload.
 
-> **Development status:** v0.1 implementation branch. Not yet published or verified on all target platforms. See [Specification](docs/SPECIFICATION.md), [Roadmap](docs/ROADMAP.md), and [Compatibility](docs/COMPATIBILITY.md).
+> **v0.1.0 release candidate — not yet published.** Linux builds, tests, Pi loading, and packed-package PDF rendering have passed; native Windows and macOS remain unverified. See the [release checklist](docs/RELEASE.md), [changelog](CHANGELOG.md), [compatibility matrix](docs/COMPATIBILITY.md), and [specification](docs/SPECIFICATION.md).
 
 ## Requirements
 
@@ -14,7 +14,7 @@ Browser selection defaults to **Edge → Chrome → Chromium** on Windows, **Chr
 
 ## Usage
 
-After installing the npm package (when published):
+After public npm publication (not available yet):
 
 ~~~sh
 npm install -g pi-md2pdf
@@ -24,7 +24,7 @@ md2pdf report.md --paper letter
 md2pdf --check
 ~~~
 
-For Pi (after release):
+For Pi after publication:
 
 ~~~sh
 pi install npm:pi-md2pdf
@@ -145,11 +145,11 @@ Only locally referenced PNG, JPEG, and WebP images beneath the Markdown file's d
 ## Develop locally
 
 ~~~sh
-npm install
+npm ci
 npm run typecheck
 npm test
 npm run build
-npm run pack:check
+npm run pack:check       # npm prepack rebuilds dist/ before packaging
 npm run check:load          # Verify package with Pi's real extension loader
 npm run check:package       # Pack, install in isolation, load Pi extension, render PDF
 node dist/cli.js --check
@@ -161,7 +161,7 @@ The `check:load` script uses Pi's real `discoverAndLoadExtensions` loader to
 verify that `/md2pdf` and `markdown_to_pdf` are registered from the
 built package. This needs neither a browser nor a model call.
 
-`check:package` installs the actual npm tarball into a temporary isolated
+`check:package` runs the npm `prepack` build before creating a tarball, then installs the actual tarball into a temporary isolated
 prefix, checks the packaged CLI and extension loader, and renders a real PDF
 with an existing Chrome/Edge/Chromium binary. It requires npm access (or a
 warm cache) and a headless browser; it cleans up after completion.
@@ -183,6 +183,6 @@ Conversion stays local; there are no cloud APIs, background processes or runtime
 
 ## Status
 
-This repository is in active development. npm publishing and Pi package gallery registration require separate release approval. Known validation gaps are tracked in [Compatibility](docs/COMPATIBILITY.md).
+**Release candidate prepared; not yet published.** The feature PR remains unmerged. npm publication, GitHub tags/releases, and public listing require separate approval. Linux checks have passed (40/40 tests and a real tarball/Pi smoke test). Native Windows and macOS checks remain open. Follow [docs/RELEASE.md](docs/RELEASE.md) before publication.
 
-License: MIT.
+Licensed under [MIT](LICENSE). Direct dependency notices: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
