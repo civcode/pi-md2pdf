@@ -99,6 +99,34 @@ md2pdf --version
 
 TOC contains clickable heading links, **not printed page numbers**. TOC and numbering work independently. Heading anchors remain deterministic, including for duplicate headings.
 
+### 3.5 Shared defaults and agent tool guidance
+
+All interfaces MUST use the immutable TypeScript defaults in `src/core/options.ts`:
+
+~~~typescript
+export const DEFAULTS = {
+  paper: "a4",
+  toc: false,
+  numberSections: false,
+  overwrite: false,
+  theme: "github-light",
+} as const;
+~~~
+
+The core options normalizer applies these defaults to omitted values. CLI help,
+Pi command description, and agent-tool parameter descriptions MUST reflect the
+same values rather than repeating independent literal defaults.
+
+The Pi agent-tool description MUST instruct the model to preserve original
+heading structure and appearance when asked to convert Markdown as-is. It MUST
+explain that TOC and additional numbering are opt-in even for a long report.
+The `overwrite` parameter requires explicit user authorization. Tool descriptions
+guide the model but cannot guarantee its choice; final option normalization and
+overwrite safeguards remain enforced by code.
+
+GitHub Light is the sole v1 theme (not a configurable CLI/agent flag). No Pi
+skill is needed or bundled.
+
 ## 4. Conversion pipeline
 
 ~~~text
