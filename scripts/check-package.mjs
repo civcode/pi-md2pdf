@@ -61,7 +61,8 @@ try {
     await stat(path.join(packageRoot, file));
   }
   const manifest = JSON.parse(await readFile(path.join(packageRoot, "package.json"), "utf8"));
-  if (manifest.private === true || manifest.version !== "0.1.0" ||
+  const sourceManifest = JSON.parse(await readFile(path.join(project, "package.json"), "utf8"));
+  if (manifest.private === true || manifest.version !== sourceManifest.version ||
       manifest.bin?.md2pdf !== "./dist/cli.js" ||
       !manifest.pi?.extensions?.includes("./dist/extension.js")) {
     throw new Error("Packed npm/Pi manifest differs from expected release candidate");
