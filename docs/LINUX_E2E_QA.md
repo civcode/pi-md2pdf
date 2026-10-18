@@ -3,6 +3,10 @@
 **Status:** Test plan only. No tests are marked passed.  
 **Purpose:** Exercise real Pi behavior, browser integration, and terminal interaction that mocks/unit tests do not establish.
 
+For a step-by-step walkthrough including exactly what to type inside Pi,
+expected results for C1–C7, troubleshooting and cleanup, use
+[the Linux test procedure](TESTING.md).
+
 ## Run the complete suite in one command
 
 From the pi-md2pdf checkout:
