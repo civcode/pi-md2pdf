@@ -20,6 +20,9 @@ First planned public release. **Not yet published to npm or tagged.**
 - Agent-tool working-directory boundary, symlink-aware path checks, cancellation/timeout handling, and offline local-asset rendering.
 - Test coverage for CLI options, Markdown output, concurrency, file paths, error/abort cleanup, Pi registration, and actual browser PDF rendering.
 - Release checks using Pi's real extension loader and an isolated npm tarball installation.
+- Context-aware `/md2pdf` argument completion for Markdown paths, options, and A4/Letter values, with quoted-filename handling.
+- Compact Pi agent tool-call and result views showing requested formatting and the actual generated PDF filename, with expanded result details.
+- Completion regression tests for exact-token submission, quoting, path boundaries, symlinks, and argument/result displays.
 
 ### Notes and limitations
 
