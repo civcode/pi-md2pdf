@@ -40,6 +40,35 @@ In Pi:
 
 Pi also exposes the `markdown_to_pdf` tool for agent-driven conversions. The slash command does **not** require a model call.
 
+### Pi slash-command completion and agent tool display
+
+The interactive `/md2pdf` command provides **context-aware argument completion**.
+Type the beginning of a local Markdown filename or option and use Pi's
+completion key (typically **Tab**) to select a suggestion:
+
+~~~text
+/md2pdf rep                  # Complete a .md/.markdown file in Pi's cwd
+/md2pdf docs/rep             # Complete inside a local subdirectory
+/md2pdf "My Re               # Suggest "My Report.md" with safe quoting
+/md2pdf report.md --         # See options and brief descriptions
+/md2pdf report.md --paper    # Complete --paper, then choose a4 or letter
+~~~
+
+Completion lists Markdown files, directories and supported flags only.
+Filename suggestions stay inside the active working directory; the
+completion menu does not traverse symlinks to outside folders. Absolute
+paths remain supported for deliberately entered direct commands.
+
+Agent-triggered `markdown_to_pdf` calls display the **input filename,
+paper size, requested TOC/numbering and overwrite intent** in a compact
+tool-call line. When conversion finishes, the compact result shows the
+**actual filename** (including an automatically selected `-2`, `-3`,
+etc. suffix); expanding it shows full paths and the browser executable.
+
+These are Pi terminal UI conveniences; the standalone CLI and PDF renderer
+are unchanged. The UI library is supplied by Pi as a peer dependency.
+
+
 ### Shared v1 defaults (no Pi skill required)
 
 The CLI, Pi slash command, and agent-callable `markdown_to_pdf` tool all use
