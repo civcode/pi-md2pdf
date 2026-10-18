@@ -80,6 +80,7 @@ md2pdf_pi() (
 - [ ] **A6 – Paper size.** Run `md2pdf_pi "/md2pdf report.md letter.pdf --paper letter"` and check `pdfinfo "$MD2PDF_QA/letter.pdf" | grep 'Page size'`. It must be US Letter rather than default A4.
 - [ ] **A7 – Failure handling.** Test `/md2pdf nonexistent.md` and a bogus `MD2PDF_BROWSER_PATH`. Expect clear errors, no output PDFs, no leftover `.md2pdf-*` temporary directories.
 - [ ] **A8 – Concurrency.** Start two independent `md2pdf_pi "/md2pdf report.md"` processes concurrently, then verify two distinct valid new PDFs and no overwritten outputs.
+- [ ] **A13 – Pi vs CLI output syntax.** The Pi slash command must reject `-o rejected.pdf` without creating a file; it must accept `--output accepted.pdf`. The standalone CLI must continue to accept `-o`.
 - [ ] **A9 – Headless SSH/tmux.** From SSH/tmux, try `env -u DISPLAY -u WAYLAND_DISPLAY` with a new Pi print-mode invocation. Confirm rendering works without GUI/browser windows and there are no new lingering Chromium processes.
 
 Convenient commands for A1–A6:
@@ -138,7 +139,7 @@ pi --no-session --no-extensions \
 ```
 
 - [ ] **C1 – File completion.** Type `/md2pdf rep`, `/md2pdf docs/ne`, and `/md2pdf "My Re`. Press Tab; verify suggestions are local, quoted correctly, and do not drop previously typed arguments.
-- [ ] **C2 – Option completion.** Type `/md2pdf report.md --`. Verify `--output` appears once and `-o` is absent; test `--paper ` to see `a4` and `letter`. Check the short option descriptions.
+- [ ] **C2 – Option completion and syntax.** Type `/md2pdf report.md --`. Verify `--output` appears once and `-o` is absent; test `--paper ` to see `a4` and `letter`. Submit `/md2pdf report.md -o rejected.pdf` and verify it is rejected rather than converted.
 - [ ] **C3 – Enter-key behavior.** Type and complete `--toc`, then press Enter. It must submit rather than remain stuck in the autocomplete popup.
 - [ ] **C4 – Confirmation semantics.** Invoke `/md2pdf report.md existing.pdf` (now a temporary valid PDF) and decline the overwrite prompt; confirm its bytes are unchanged.
 - [ ] **C5 – Agent tool rendering.** Ask Pi to convert `report.md`. Verify compact `renderCall` shows source/flags, and `renderResult` displays the *actual* output basename and size. Expanded output should reveal full paths/browser.
