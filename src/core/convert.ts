@@ -1,6 +1,5 @@
-import { readFile, stat, lstat, mkdtemp, rm, rename, link } from "node:fs/promises";
+import { readFile, lstat, mkdtemp, rm, rename, link } from "node:fs/promises";
 import path from "node:path";
-import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
 import puppeteer from "puppeteer-core";
@@ -78,7 +77,13 @@ export async function convertMarkdownToPdf(options: ConversionOptions): Promise<
     }
     if (opts.signal?.aborted) throw abortError();
     if (opts.overwrite) await rename(tempOutput, opts.output);
-    else await link(tempOutput, opts.output); // exclusive/atomic: never clobber an existing file
+    else {
+      try { await link(tempOutput, opts.output); }
+      catch (error) {
+        if ((error as NodeJS.ErrnoException).code === "EEXIST") throw new Error("Output already exists: " + opts.output);
+        throw error;
+      }
+    } // exclusive/atomic: never clobber an existing file
     return { input: opts.input, output: opts.output, bytes: buffer.byteLength, browser };
   } finally {
     await rm(tmp, { recursive: true, force: true });
