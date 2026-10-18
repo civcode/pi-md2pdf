@@ -1,6 +1,6 @@
 # pi-md2pdf — Development Roadmap
 
-**Status:** Planned; no implementation started  
+**Status:** Linux validation complete; release and native cross-platform verification pending  
 **Last reviewed:** 2026-10-18  
 **Repository:** https://github.com/civcode/pi-md2pdf  
 **Normative scope:** [v1 Specification](SPECIFICATION.md)
@@ -11,7 +11,7 @@ The `feat/initial-implementation` branch now contains the v1 source implementati
 
 - **Phases 0–1:** code/architecture and project structure prepared; dependency installation and package lockfile are pending.
 - **Phases 2–4:** renderer, CLI, and Pi extension implemented in source; **functional verification is pending**.
-- **Phase 5:** unit/integration tests authored, but the test suite and visual comparisons have **not** completed.
+- **Phase 5:** Linux test suite completed (40/40); PDF reference comparisons and native Windows/macOS runs are still pending.
 - **Phase 6:** README, license, npm manifest and Pi package metadata prepared. Publishing, release tagging and npm gallery discovery are **not performed**.
 
 See [VALIDATION.md](VALIDATION.md) for the exact environment limitations and remaining release blockers. Do not interpret source completion as a verified v1 release.
@@ -154,8 +154,8 @@ No calendar deadlines or guaranteed durations are assumed. Phases may be split i
 - [x] Add `npm run check:package` for an isolated npm tarball install, real Pi loader check, and PDF export.
 - [x] Add deterministic tests for browser startup failure, render failure, cancellation, timeout, and cleanup.
 - [x] Add Windows drive-letter, case-insensitive and UNC path tests.
-- [ ] Run `npm run typecheck && npm test && npm run build` on the current branch.
-- [ ] Run `npm run check:load && npm run check:package` on a host with npm access and Chromium.
+- [x] Run `npm run typecheck && npm test && npm run build` on Linux (40/40 tests, build passed).
+- [x] Run `npm run check:load && npm run check:package` on Linux with Chromium (both passed).
 - [ ] Validate the installed package on Windows and macOS before claiming support.
 
 ## Quality gates and traceability
