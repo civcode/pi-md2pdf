@@ -150,10 +150,26 @@ npm run typecheck
 npm test
 npm run build
 npm run pack:check
+npm run check:load          # Verify package with Pi's real extension loader
+npm run check:package       # Pack, install in isolation, load Pi extension, render PDF
 node dist/cli.js --check
 node dist/cli.js tests/fixtures/sample.md -o /tmp/sample-md2pdf.pdf --toc --number-sections
 pi --extension ./dist/extension.js
 ~~~
+
+The `check:load` script uses Pi's real `discoverAndLoadExtensions` loader to
+verify that `/md2pdf` and `markdown_to_pdf` are registered from the
+built package. This needs neither a browser nor a model call.
+
+`check:package` installs the actual npm tarball into a temporary isolated
+prefix, checks the packaged CLI and extension loader, and renders a real PDF
+with an existing Chrome/Edge/Chromium binary. It requires npm access (or a
+warm cache) and a headless browser; it cleans up after completion.
+
+Additional unit tests cover browser failure, cancellation, timeout,
+atomic non-overwrite cleanup, and Windows/UNC path containment (using
+`path.win32` on any host). These tests do not replace native Windows/macOS
+validation. Neither command triggers GitHub Actions or publishes anything.
 
 No GitHub Actions workflow is required for local checks.
 
