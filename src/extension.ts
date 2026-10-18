@@ -4,7 +4,7 @@ import path from "node:path";
 import { Type } from "@earendil-works/pi-ai";
 import { defineTool, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { convertMarkdownToPdf } from "./core/convert.js";
-import { defaultOutput } from "./core/options.js";
+import { DEFAULTS, defaultOutput } from "./core/options.js";
 import { HELP, parseArgs, tokenizeCommand } from "./core/argv.js";
 
 async function exists(file: string): Promise<boolean> {
@@ -12,7 +12,7 @@ async function exists(file: string): Promise<boolean> {
 }
 export default function piMd2Pdf(pi: ExtensionAPI): void {
   pi.registerCommand("md2pdf", {
-    description: "Convert Markdown to a GitHub-style PDF without a model call",
+    description: `Convert Markdown to PDF (${DEFAULTS.theme}; ${DEFAULTS.paper}; no TOC or added numbering by default), without a model call`,
     handler: async (args, ctx) => {
       const report = (message: string, level: "info" | "warning" | "error") => {
         if (ctx.hasUI) ctx.ui.notify(message, level);
@@ -43,14 +43,14 @@ export default function piMd2Pdf(pi: ExtensionAPI): void {
   pi.registerTool(defineTool({
     name: "markdown_to_pdf",
     label: "Markdown to PDF",
-    description: "Convert local Markdown to a GitHub-style PDF. For ordinary conversion, omit toc and numberSections so the original document looks like Markdown Viewer. Only enable these formatting changes when the user explicitly requests them. Existing PDFs require explicit overwrite permission.",
+    description: `Convert a local Markdown file to PDF using the ${DEFAULTS.theme} theme. Defaults: paper=${DEFAULTS.paper}, toc=${DEFAULTS.toc}, numberSections=${DEFAULTS.numberSections}, overwrite=${DEFAULTS.overwrite}. For a plain conversion request, preserve the author's headings and layout; do NOT add a TOC or section numbering, even for lengthy documents. Only set toc=true when the user explicitly requests a table of contents, and numberSections=true when the user explicitly requests automatic heading numbers. Never overwrite an existing file without the user's explicit authorization.`,
     parameters: Type.Object({
-      input: Type.String({ description: "Markdown source path" }),
-      output: Type.Optional(Type.String({ description: "PDF destination path; defaults beside source" })),
-      paper: Type.Optional(Type.Union([Type.Literal("a4"), Type.Literal("letter")])),
-      toc: Type.Optional(Type.Boolean({ description: "Add a potentially long table of contents ONLY if explicitly requested; otherwise omit (default false)." })),
-      numberSections: Type.Optional(Type.Boolean({ description: "Add section numbers ONLY when explicitly requested. Documents with existing section numbering keep their original numbers. Default false." })),
-      overwrite: Type.Optional(Type.Boolean({ description: "Overwrite existing output only if explicitly authorized" })),
+      input: Type.String({ description: "Required local Markdown file path, relative to Pi working directory or absolute." }),
+      output: Type.Optional(Type.String({ description: "Optional PDF output path. If omitted, use the same basename as input with .pdf, beside the source file." })),
+      paper: Type.Optional(Type.Union([Type.Literal("a4"), Type.Literal("letter")], { description: `PDF paper format. Default: ${DEFAULTS.paper}. Choose letter only if requested.` })),
+      toc: Type.Optional(Type.Boolean({ description: `Add a linked table of contents ONLY if the user requests one. Default: ${DEFAULTS.toc}. A TOC may add many pages.` })),
+      numberSections: Type.Optional(Type.Boolean({ description: `Add automatic section numbering ONLY if requested. Default: ${DEFAULTS.numberSections}. Existing heading numbers are preserved.` })),
+      overwrite: Type.Optional(Type.Boolean({ description: `Overwrite an existing PDF ONLY with explicit user authorization. Default: ${DEFAULTS.overwrite}.` })),
     }),
     async execute(_toolCallId, params, signal, onUpdate, ctx) {
       onUpdate?.({ content: [{ type: "text", text: "Rendering Markdown PDF…" }], details: { status: "rendering" } });
@@ -60,7 +60,7 @@ export default function piMd2Pdf(pi: ExtensionAPI): void {
         paper: params.paper,
         toc: params.toc,
         numberSections: params.numberSections,
-        overwrite: params.overwrite ?? false,
+        overwrite: params.overwrite,
         signal,
       });
       return {
