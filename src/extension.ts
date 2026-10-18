@@ -14,24 +14,28 @@ export default function piMd2Pdf(pi: ExtensionAPI): void {
   pi.registerCommand("md2pdf", {
     description: "Convert Markdown to a GitHub-style PDF without a model call",
     handler: async (args, ctx) => {
+      const report = (message: string, level: "info" | "warning" | "error") => {
+        if (ctx.hasUI) ctx.ui.notify(message, level);
+        else process.stderr.write(message + "\\n");
+      };
       try {
         const parsed = parseArgs(tokenizeCommand(args ?? ""), true);
-        if (parsed.help) { ctx.ui.notify(HELP, "info"); return; }
-        if (parsed.check || parsed.version) { ctx.ui.notify("For diagnostics use: md2pdf --check", "info"); return; }
+        if (parsed.help) { report(HELP, "info"); return; }
+        if (parsed.check || parsed.version) { report("For diagnostics use: md2pdf --check", "info"); return; }
         const options = parsed.options;
         options.input = path.resolve(ctx.cwd, options.input);
         options.output = path.resolve(ctx.cwd, options.output ?? defaultOutput(options.input));
         if (await exists(options.output) && !options.overwrite) {
           if (!ctx.hasUI) throw new Error("Output exists; cannot confirm overwrite in non-interactive mode.");
           const confirmed = await ctx.ui.confirm("Overwrite PDF?", options.output);
-          if (!confirmed) { ctx.ui.notify("Conversion cancelled", "warning"); return; }
+          if (!confirmed) { report("Conversion cancelled", "warning"); return; }
           options.overwrite = true;
         }
-        ctx.ui.notify("Converting Markdown to PDF…", "info");
-        const result = await convertMarkdownToPdf(options);
-        ctx.ui.notify("Created " + result.output + " (" + result.bytes + " bytes)", "info");
+        report("Converting Markdown to PDF…", "info");
+        const result = await convertMarkdownToPdf({ ...options, signal: ctx.signal });
+        report("Created " + result.output + " (" + result.bytes + " bytes)", "info");
       } catch (error) {
-        ctx.ui.notify("md2pdf: " + (error instanceof Error ? error.message : String(error)), "error");
+        report("md2pdf: " + (error instanceof Error ? error.message : String(error)), "error");
       }
     },
   });
