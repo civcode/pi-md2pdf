@@ -193,6 +193,43 @@ directory containing an `.md` file and confirm a plain conversion uses
 that exact file. Test an outside-workspace tool path and verify that
 conversion is rejected. No GitHub Actions required.
 
+## Extension hardening (2026-10-18, pending full local run)
+
+Implemented on `feat/initial-implementation`: `scripts/check-load.mjs` verifies a
+compiled or installed package with Pi's actual `discoverAndLoadExtensions` loader.
+`scripts/check-package.mjs` creates a tarball, installs it into an isolated
+temporary npm prefix, verifies the CLI and Pi loader, and renders a real PDF.
+Neither script publishes, modifies global Pi settings, or uses GitHub Actions.
+
+Added `tests/failures.test.ts` covering browser startup/rendering failures,
+pre-abort and in-render aborts, timeout reporting, browser cleanup, original
+output preservation and temporary file cleanup. Updated abort handling in
+`src/core/convert.ts` to safely catch browser close errors and surface the
+original cancellation/timeout if browser closure interrupts rendering.
+
+Added `tests/windows-paths.test.ts` to cover Windows case folding, drive
+boundaries and UNC shares with `path.win32` on any OS;
+`src/core/workspace.ts` now exports the platform-aware predicate.
+
+An isolated Node 22 smoke check of the new containment predicate passed
+for same-drive case differences, cross-drive escape, traversal, and UNC shares.
+**The full test suite, actual Pi-loader check, and tarball check have NOT run
+on this container:** npm dependencies are not cached and the npm registry
+is not reachable. Native Windows/macOS runtime testing remains pending.
+
+Commands to run on a development host (after updating the working branch):
+
+```sh
+npm install
+npm run typecheck
+npm test
+npm run build
+npm run check:load
+npm run check:package
+npm run pack:check
+npm audit --omit=dev
+```
+
 ## Unverified / release blockers
 
 - [ ] Regenerate, validate, and commit `package-lock.json` after upgrading dependencies.
