@@ -4,7 +4,7 @@ export function tokenizeCommand(input: string): string[] {
   const args: string[] = []; let part = ""; let quote: "'" | '"' | null = null; let active = false;
   for (let i = 0; i < input.length; i++) {
     const c = input[i]!;
-    if (c === "\\" && i + 1 < input.length && (quote !== "'" || input[i + 1] === "'")) {
+    if (c === "\\" && i + 1 < input.length && (input[i + 1] === "\\" || input[i + 1] === quote || (!quote && /\\s/.test(input[i + 1]!)))) {
       part += input[++i]; active = true; continue;
     }
     if (quote) {
