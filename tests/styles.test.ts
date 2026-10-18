@@ -12,5 +12,7 @@ describe("stylesheet loading", () => {
     expect(html).toContain("PDF style check");
     expect(html).toContain("print-color-adjust");
     expect(html).toContain(".markdown-body table");
+    expect(html).toContain("font-size: 13.2px; line-height: 1.5;");
+    expect(html).toContain(".markdown-body pre code { font-size: 100%; }");
   });
 });
