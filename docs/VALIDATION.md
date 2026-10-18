@@ -122,6 +122,19 @@ Fixes applied on the feature branch (not yet revalidated on user's machine):
 
 **Verification needed:** pull feature branch, rerun local checks, generate the UWB file *without* TOC/numbering, inspect font sizes and resulting page count against the 72-page Chrome reference; also test `--toc --number-sections` for no double numbering. Full parity cannot be promised across Linux and Windows because fonts and browser builds differ.
 
+## Centralized defaults and Pi tool guidance (2026-10-18)
+
+Implemented on `feat/initial-implementation`:
+
+- `src/core/options.ts` now exports `DEFAULTS = { paper: "a4", toc: false, numberSections: false, overwrite: false, theme: "github-light" } as const`. `prepareOptions()` applies these defaults when options are omitted.
+- CLI help and the Pi slash-command description reference this same object instead of separately hardcoding behavior.
+- The `markdown_to_pdf` tool description and each optional parameter describe default behavior. They instruct the agent to add TOC or heading numbering **only if the user requests it**; a plain conversion should preserve the original structure.
+- The renderer identifies the fixed v1 `github-light` theme in its HTML. No theme selector or Pi skill was added.
+- Added or extended unit tests for normalizing defaults, explicit overrides, CLI help, Pi tool metadata, and HTML theme attribution.
+- Updated the README and specification.
+
+**Validation status:** Changes have been committed and pushed, but `npm run typecheck`, `npm test`, `npm run build`, and actual Pi smoke tests must be rerun after pulling the commits. This container lacks the project's npm dependencies and cannot access the registry; no GitHub Actions runs were used. Tool descriptions guide an LLM but cannot guarantee that the model will never choose extra options.
+
 ## Unverified / release blockers
 
 - [ ] Regenerate, validate, and commit `package-lock.json` after upgrading dependencies.
