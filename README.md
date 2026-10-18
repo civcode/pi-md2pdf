@@ -63,6 +63,28 @@ Those features require an explicit request (`--toc` and `--number-sections`
 in the CLI or `toc: true` and `numberSections: true` in the agent tool).
 GitHub Light is the fixed theme in v1; there is no theme option to configure.
 
+### How Pi chooses the input file
+
+The model-callable `markdown_to_pdf` tool is **scoped to Pi's current
+working directory** (`ctx.cwd`):
+
+- `report.md` means exactly `<Pi cwd>/report.md`, not the first result from
+  a home-directory search.
+- Nested paths such as `docs/report.md` and absolute paths **within** Pi's
+  current working directory are allowed.
+- A missing file produces a clear error; no other directories are searched.
+- Absolute paths, `../` traversal, and symlinks resolving **outside** Pi's
+  current working directory are rejected by the tool. Explicit PDF output paths
+  must also remain within this directory.
+
+For deliberate conversions from other directories, run the user-controlled
+`/md2pdf /absolute/path/report.md` command in Pi, or use the standalone
+`md2pdf` CLI. Those interfaces retain explicit cross-directory path support.
+
+These checks are enforced in code, in addition to the model's tool
+description. The model can still attempt a shell search, but it cannot use
+the `markdown_to_pdf` tool to export a file outside the Pi working directory.
+
 ### Automatic filenames without overwriting
 
 If the output path is omitted, the converter chooses an unused filename automatically:
