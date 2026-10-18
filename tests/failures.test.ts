@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
@@ -45,6 +45,7 @@ async function assertNoTemporaryFiles(dir: string) {
 
 describe("headless browser failure paths", () => {
   beforeEach(() => { mocked.launch.mockReset(); });
+  afterEach(() => { vi.restoreAllMocks(); });
 
   it("rejects an already-aborted conversion without launching the browser", async () => {
     const { dir, input, output } = await setup();
@@ -100,11 +101,13 @@ describe("headless browser failure paths", () => {
   it("times out, closes the browser, and removes temporary files", async () => {
     const { dir, input, output } = await setup();
     try {
+      const timeout = new AbortController();
+      vi.spyOn(AbortSignal, "timeout").mockReturnValue(timeout.signal);
       const { page, browser } = fakeBrowser();
       page.setContent.mockImplementation(async () => {
-        await new Promise(resolve => setTimeout(resolve, 40));
+        timeout.abort(new DOMException("Time limit reached", "TimeoutError"));
       });
-      await expect(convertMarkdownToPdf({ input, output, timeoutMs: 5 }))
+      await expect(convertMarkdownToPdf({ input, output, timeoutMs: 500 }))
         .rejects.toThrow(/timed out/);
       expect(browser.close).toHaveBeenCalled();
       await assertNoTemporaryFiles(dir);
