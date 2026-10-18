@@ -100,6 +100,14 @@ a11() {
     valid_pdf "$QA/options.pdf"
 }
 a12() { [[ -z "$(find "$QA" -type d -name '.md2pdf-*' -print -quit)" ]]; }
+a13() {
+  local message
+  message="$(pi_print '/md2pdf report.md -o rejected.pdf' 2>&1)"
+  [[ "$message" == *'Unknown option: -o'* && ! -e "$QA/rejected.pdf" ]] || return 1
+  pi_print '/md2pdf report.md --output accepted.pdf' &&
+    valid_pdf "$QA/accepted.pdf"
+}
+
 
 b1() {
   pi_json "$QA" 'Convert report.md to PDF as-is using markdown_to_pdf. Do not add TOC, numbering or overwrite.' > "$QA/logs/agent-default.jsonl" || return 1
@@ -147,6 +155,7 @@ record 'A9  Headless Pi without DISPLAY' a9
 record 'A10 Standalone CLI' a10
 record 'A11 Explicit TOC and section numbering' a11
 record 'A12 No temporary conversion directories' a12
+record 'A13 Pi rejects -o and accepts --output' a13
 if [[ "${RUN_AGENT:-1}" == 1 ]]; then
   if command -v jq >/dev/null; then
     printf '\nAgent tests invoke Pi four times and may use model/API tokens.\n'
