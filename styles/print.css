@@ -1,0 +1,43 @@
+/* GitHub Light, tuned for printed technical reports. */
+html { background: #fff; }
+body.markdown-body { box-sizing: border-box; margin: 0; padding: 0; color: #1f2328;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+  font-size: 13.2px; line-height: 1.5; max-width: none; }
+.markdown-body h1 { font-size: 2em; }
+.markdown-body h2 { font-size: 1.5em; }
+.markdown-body h3 { font-size: 1.25em; }
+.markdown-body h1, .markdown-body h2 { border-bottom: 1px solid #d1d9e0; padding-bottom: .3em; }
+.markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4, .markdown-body h5, .markdown-body h6 {
+  break-after: avoid-page; page-break-after: avoid; }
+.markdown-body table { display: table; width: auto; max-width: 100%; table-layout: auto; overflow: visible; border-collapse: collapse; }
+.markdown-body table th, .markdown-body table td { border: 1px solid #d1d9e0; padding: 6px 10px; overflow-wrap: anywhere; }
+.markdown-body table tr:nth-child(even) { background: #f6f8fa; }
+.markdown-body table thead { display: table-header-group; }
+.markdown-body table tr { break-inside: avoid; }
+.markdown-body pre, .markdown-body .hljs { background: #f6f8fa; color: #1f2328;
+  border-radius: 6px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.markdown-body pre { break-inside: avoid; }
+.markdown-body code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; font-size: .85em; }
+/* GitHub/Markdown Viewer keeps fenced code at body size; inline code is smaller. */
+.markdown-body pre { font-size: 100%; }
+.markdown-body pre code { font-size: 100%; }
+.markdown-body img { max-width: 100%; max-height: 235mm; object-fit: contain; }
+.markdown-body blockquote { color: #59636e; border-left: .25em solid #d1d9e0; }
+.markdown-body a { color: #0969da; overflow-wrap: anywhere; }
+.markdown-body .hljs-keyword, .markdown-body .hljs-selector-tag { color: #cf222e; }
+.markdown-body .hljs-string, .markdown-body .hljs-attr { color: #0a3069; }
+.markdown-body .hljs-number, .markdown-body .hljs-literal { color: #0550ae; }
+.markdown-body .hljs-comment { color: #6e7781; }
+.md2pdf-toc { padding: 0 0 1.2em; margin-bottom: 1.5em; border-bottom: 1px solid #d1d9e0; }
+.md2pdf-toc ul { list-style: none; padding: 0; margin: 0; }
+.md2pdf-toc li { margin: .2em 0; }
+.md2pdf-toc .toc-level-2 { padding-left: 1.2em; }
+.md2pdf-toc .toc-level-3 { padding-left: 2.4em; }
+.md2pdf-toc .toc-level-4 { padding-left: 3.6em; }
+.md2pdf-toc .toc-level-5 { padding-left: 4.8em; }
+.md2pdf-toc .toc-level-6 { padding-left: 6em; }
+@media print {
+  html, body { background: #fff; }
+  *, *::before, *::after { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  .markdown-body { max-width: none; }
+}

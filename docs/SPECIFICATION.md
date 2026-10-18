@@ -47,6 +47,16 @@ Mermaid rendering, LaTeX/KaTeX math, remote images, custom themes/templates, cus
 - In interactive Pi sessions only, may request confirmation before replacing a PDF. In non-interactive modes, existing outputs are rejected rather than overwritten.
 - Parses quoted paths/filenames with spaces without passing input through a shell.
 
+#### Interactive command completion
+
+`/md2pdf` provides Pi-native `getArgumentCompletions`:
+- Suggest `.md` and `.markdown` files and directories from the active session working directory.
+- Support partial and quoted paths, spaces in filenames and nested paths.
+- Suggest supported flags with short descriptions and the values `a4` / `letter` after `--paper`.
+- Preserve already typed command arguments; never offer an exact completed option/token so Enter can submit it.
+- Do not search outside the working directory or follow symlinked directories in completion.
+- Do not require a separate skill, persistent UI, or additional PDF runtime.
+
 ### 3.2 Agent-callable tool
 
 Register `markdown_to_pdf` with a structured input containing:
@@ -61,6 +71,24 @@ Register `markdown_to_pdf` with a structured input containing:
 | `overwrite` | boolean | `false` | Explicit opt-in to replace output |
 
 The tool returns the final PDF path and concise success/error information. It does not ask interactive questions; the calling agent must obtain permission before opting into an overwrite. Tool execution supports cancellation where Pi provides an abort signal.
+
+#### Agent-tool input path policy
+
+The `markdown_to_pdf` **agent tool** must resolve input names against
+`ctx.cwd`, without searching parents, a home folder, or other repositories.
+A basename refers only to the file in that working directory. If missing,
+return a useful "not found here" message rather than discovering a different
+same-named file.
+
+For safety, its input and output paths must stay under the current working
+directory, including after resolving symlinks. Absolute paths are accepted
+only when inside that directory. The tool refuses external paths rather than
+silently using them, even if supplied by the model. The tool description
+instructs Pi not to run broad filesystem searches for a basename.
+
+The direct, user-entered `/md2pdf` slash command and the standalone CLI are
+intentionally not subject to that restriction: explicit absolute paths are
+supported for deliberate cross-directory conversions.
 
 ### 3.3 Standalone CLI
 
@@ -88,16 +116,51 @@ md2pdf --version
 | --- | --- |
 | Theme | GitHub Light |
 | Page size | A4 |
-| Margins | 15 mm on each side |
-| Output | Input basename with `.pdf` beside source file |
+| Margins | 10 mm on each side |
+| Output | First free input.pdf, input-2.pdf, input-3.pdf, ... beside source |
 | TOC | Disabled |
 | Automatic heading numbering | Disabled |
 | Print backgrounds | Enabled |
 | Browser mode | Headless only |
-| Existing destination | Reject / request confirmation in interactive Pi |
+| Existing destination | Implicit name: auto-increment; explicit name: reject or request confirmation in interactive Pi |
 | Remote resources | Disabled |
 
 TOC contains clickable heading links, **not printed page numbers**. TOC and numbering work independently. Heading anchors remain deterministic, including for duplicate headings.
+
+### 3.5 Shared defaults and agent tool guidance
+
+All interfaces MUST use the immutable TypeScript defaults in `src/core/options.ts`:
+
+~~~typescript
+export const DEFAULTS = {
+  paper: "a4",
+  toc: false,
+  numberSections: false,
+  overwrite: false,
+  outputConflict: "increment",
+  theme: "github-light",
+} as const;
+~~~
+
+The core options normalizer applies these defaults to omitted values.
+When a caller omits the output filename and the derived .pdf exists, the
+converter MUST atomically select `-2`, `-3`, etc. without a confirmation.
+Explicit output path collisions MUST fail unless overwrite is authorized;
+interactive Pi MAY ask confirmation for an explicitly supplied destination.
+Concurrent conversions MUST reserve distinct filenames. Overwrite remains false
+by default. CLI help,
+Pi command description, and agent-tool parameter descriptions MUST reflect the
+same values rather than repeating independent literal defaults.
+
+The Pi agent-tool description MUST instruct the model to preserve original
+heading structure and appearance when asked to convert Markdown as-is. It MUST
+explain that TOC and additional numbering are opt-in even for a long report.
+The `overwrite` parameter requires explicit user authorization. Tool descriptions
+guide the model but cannot guarantee its choice; final option normalization and
+overwrite safeguards remain enforced by code.
+
+GitHub Light is the sole v1 theme (not a configurable CLI/agent flag). No Pi
+skill is needed or bundled.
 
 ## 4. Conversion pipeline
 
@@ -126,7 +189,7 @@ Render a self-contained HTML document via the browser API, not a local HTTP serv
 **Required:** headings H1–H6, paragraphs, inline emphasis, ordered/unordered lists, links, blockquotes, thematic rules, fenced code, syntax highlighting, inline code, GitHub-style pipe tables, local images (PNG/JPEG/WebP), Unicode, and German diacritics.
 
 **Required printing behavior:**
-- Thin borders and alternating shading for tables; repeat table headers where the renderer permits.
+- Thin borders, natural/content-dependent table widths and alternating shading for tables; repeat table headers where the renderer permits.
 - Avoid heading orphans and unwanted splits through code blocks and table rows where practical.
 - Wrap long code/table content sensibly; no off-page content in reference fixtures.
 - Preserve print backgrounds so table stripes and code backgrounds appear in the PDF.

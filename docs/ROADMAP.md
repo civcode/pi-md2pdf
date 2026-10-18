@@ -1,9 +1,20 @@
 # pi-md2pdf — Development Roadmap
 
-**Status:** Planned; no implementation started  
+**Status:** Linux validation complete; release and native cross-platform verification pending  
 **Last reviewed:** 2026-10-18  
 **Repository:** https://github.com/civcode/pi-md2pdf  
 **Normative scope:** [v1 Specification](SPECIFICATION.md)
+
+## Implementation status (2026-10-18)
+
+The `feat/initial-implementation` branch now contains the v1 source implementation, CLI, Pi integration, print CSS, test suites, fixtures, and documentation.
+
+- **Phases 0–1:** architecture and project structure complete; a clean `npm ci` has passed on Linux with the committed lockfile.
+- **Phases 2–4:** renderer, CLI and Pi extension implemented, typechecked and exercised on Linux, including the real Pi loader.
+- **Phase 5:** Linux test suite completed (40/40); PDF reference comparisons and native Windows/macOS runs are still pending.
+- **Phase 6:** v0.1.0 changelog, notices, release checklist, public npm manifest and prepack build safeguard prepared. Packaging changes still require the next local validation run. No tag, merge, npm publish or gallery listing has been performed.
+
+See [VALIDATION.md](VALIDATION.md) and [RELEASE.md](RELEASE.md) for the completed Linux checks, release-candidate validation and remaining blockers. Do not interpret source completion as a verified v1 release.
 
 ## Delivery principles
 
@@ -65,11 +76,11 @@ No calendar deadlines or guaranteed durations are assumed. Phases may be split i
 - [ ] Implement typed normalized options and validation; a single `convertMarkdownToPdf` entry point.
 - [ ] Parse Markdown, escape untrusted raw HTML, render GitHub-style tables/headings/code with local syntax highlighting.
 - [ ] Create stable heading anchors and optional linked TOC and heading numbering. Do not promise printed TOC page numbers.
-- [ ] Package light GitHub stylesheet and print CSS with A4/Letter sizing, 15 mm margins, background colors, code wrapping, and page break guidance.
+- [ ] Package light GitHub stylesheet and print CSS with A4/Letter sizing, 10 mm margins, background colors, code wrapping, and page break guidance.
 - [ ] Resolve local PNG/JPEG/WebP image paths relative to the source; enforce directory-boundary and size policies; reject network and unsupported resources.
 - [ ] Discover existing browser binaries on Linux, Windows and macOS, with `MD2PDF_BROWSER_PATH` and explicit override precedence.
 - [ ] Launch `puppeteer-core` in headless mode, render self-contained HTML without a local HTTP server, and deny external network requests.
-- [ ] Implement temp-output validation, no-overwrite default, cancellation, timeout and process cleanup.
+- [ ] Implement temp-output validation, non-destructive numbered outputs on implicit collisions, cancellation, timeout and process cleanup.
 - [ ] Add unit tests for parsing, TOC/numbering, browser search-order/path behavior, input validation, resource restrictions and output handling.
 - [ ] Run initial Linux browser integration tests with real PDF files and review renderings.
 
@@ -97,7 +108,7 @@ No calendar deadlines or guaranteed durations are assumed. Phases may be split i
 - [ ] Register a direct `/md2pdf` slash command, including input/output and supported options; no model call.
 - [ ] Register the agent-callable `markdown_to_pdf` tool with a typed schema and result, forwarding to the shared engine.
 - [ ] Add progress messages and completed output path; use Pi UI APIs only when that mode supports them.
-- [ ] Confirm overwrite only interactively when possible; require explicit `overwrite` in the tool; refuse overwrite in non-interactive command mode.
+- [ ] Auto-number an occupied implicit output (report-2.pdf, etc.) without prompting. For explicit occupied filenames, require confirmation in interactive Pi or an explicit `overwrite` authorization in the tool; refuse unsafe overwrites in non-interactive modes.
 - [ ] Forward cancellation to the renderer and ensure no orphaned browsers.
 - [ ] Test development load via Pi's extension flag or a local package installation.
 - [ ] Compare CLI-generated and Pi-generated outputs for equivalent options and browsers.
@@ -136,6 +147,24 @@ No calendar deadlines or guaranteed durations are assumed. Phases may be split i
 **Exit gate:** installable, documented release candidate, with test evidence and known limitations ready for review.
 
 **Suggested commit:** `docs: prepare pi-md2pdf release candidate`.
+
+## Pi interactive usability — v0.1.0
+
+- [x] Add `/md2pdf` filename/flag/paper argument completion with descriptions.
+- [x] Add compact agent tool call and result rendering, with actual output name and expanded details.
+- [x] Add tests for quoted/nested filenames, exact tokens, flag values and output rendering.
+- [ ] Run TypeScript/Vitest, Pi real-loader and package smoke tests on the updated branch.
+- [ ] Manually verify Tab selection and Enter behavior in an interactive Pi session.
+
+## Extra pre-release verification (implemented, pending execution)
+
+- [x] Add `npm run check:load` using Pi's real extension loader.
+- [x] Add `npm run check:package` for an isolated npm tarball install, real Pi loader check, and PDF export.
+- [x] Add deterministic tests for browser startup failure, render failure, cancellation, timeout, and cleanup.
+- [x] Add Windows drive-letter, case-insensitive and UNC path tests.
+- [x] Run `npm run typecheck && npm test && npm run build` on Linux (40/40 tests, build passed).
+- [x] Run `npm run check:load && npm run check:package` on Linux with Chromium (both passed).
+- [ ] Validate the installed package on Windows and macOS before claiming support.
 
 ## Quality gates and traceability
 
