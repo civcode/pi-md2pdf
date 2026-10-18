@@ -76,11 +76,11 @@ No calendar deadlines or guaranteed durations are assumed. Phases may be split i
 - [ ] Implement typed normalized options and validation; a single `convertMarkdownToPdf` entry point.
 - [ ] Parse Markdown, escape untrusted raw HTML, render GitHub-style tables/headings/code with local syntax highlighting.
 - [ ] Create stable heading anchors and optional linked TOC and heading numbering. Do not promise printed TOC page numbers.
-- [ ] Package light GitHub stylesheet and print CSS with A4/Letter sizing, 15 mm margins, background colors, code wrapping, and page break guidance.
+- [ ] Package light GitHub stylesheet and print CSS with A4/Letter sizing, 10 mm margins, background colors, code wrapping, and page break guidance.
 - [ ] Resolve local PNG/JPEG/WebP image paths relative to the source; enforce directory-boundary and size policies; reject network and unsupported resources.
 - [ ] Discover existing browser binaries on Linux, Windows and macOS, with `MD2PDF_BROWSER_PATH` and explicit override precedence.
 - [ ] Launch `puppeteer-core` in headless mode, render self-contained HTML without a local HTTP server, and deny external network requests.
-- [ ] Implement temp-output validation, no-overwrite default, cancellation, timeout and process cleanup.
+- [ ] Implement temp-output validation, non-destructive numbered outputs on implicit collisions, cancellation, timeout and process cleanup.
 - [ ] Add unit tests for parsing, TOC/numbering, browser search-order/path behavior, input validation, resource restrictions and output handling.
 - [ ] Run initial Linux browser integration tests with real PDF files and review renderings.
 
@@ -108,7 +108,7 @@ No calendar deadlines or guaranteed durations are assumed. Phases may be split i
 - [ ] Register a direct `/md2pdf` slash command, including input/output and supported options; no model call.
 - [ ] Register the agent-callable `markdown_to_pdf` tool with a typed schema and result, forwarding to the shared engine.
 - [ ] Add progress messages and completed output path; use Pi UI APIs only when that mode supports them.
-- [ ] Confirm overwrite only interactively when possible; require explicit `overwrite` in the tool; refuse overwrite in non-interactive command mode.
+- [ ] Auto-number an occupied implicit output (report-2.pdf, etc.) without prompting. For explicit occupied filenames, require confirmation in interactive Pi or an explicit `overwrite` authorization in the tool; refuse unsafe overwrites in non-interactive modes.
 - [ ] Forward cancellation to the renderer and ensure no orphaned browsers.
 - [ ] Test development load via Pi's extension flag or a local package installation.
 - [ ] Compare CLI-generated and Pi-generated outputs for equivalent options and browsers.
