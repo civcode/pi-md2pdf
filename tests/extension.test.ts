@@ -66,4 +66,46 @@ describe("Pi agent tool documentation", () => {
       )).rejects.toThrow(/outside Pi's working directory/);
     } finally { await rm(root, { recursive: true, force: true }); }
   });
+
+  it("registers argument completion and renders tool call and result arguments", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "md2pdf-ui-registration-"));
+    try {
+      await writeFile(path.join(root, "report.md"), "# Report");
+      let command: {
+        getArgumentCompletions?: (prefix: string) => Array<{ value: string }> | null;
+      } | undefined;
+      let sessionStart: ((event: unknown, ctx: { cwd: string }) => void) | undefined;
+      let tool: {
+        renderCall?: (params: unknown, theme: unknown) => { render(width: number): string[] };
+        renderResult?: (result: unknown, options: unknown, theme: unknown) => { render(width: number): string[] };
+      } | undefined;
+      piMd2Pdf({
+        on(event: string, handler: (event: unknown, ctx: { cwd: string }) => void) {
+          if (event === "session_start") sessionStart = handler;
+        },
+        registerCommand(_name: string, value: typeof command) { command = value; },
+        registerTool(value: typeof tool) { tool = value; },
+      } as unknown as ExtensionAPI);
+      expect(sessionStart).toBeTypeOf("function");
+      sessionStart?.({}, { cwd: root });
+      expect(command?.getArgumentCompletions?.("report.md --")?.map(i => i.value))
+        .toContain("report.md --toc");
+      const theme = {
+        bold(value: string) { return value; },
+        fg(_style: string, value: string) { return value; },
+      };
+      const call = tool?.renderCall?.({ input: "report.md", toc: true }, theme).render(140).join("\n");
+      expect(call).toContain("report.md");
+      expect(call).toContain("TOC");
+      const result = tool?.renderResult?.({
+        content: [{ type: "text", text: "Created something" }],
+        details: {
+          input: path.join(root, "report.md"), output: path.join(root, "report-2.pdf"),
+          bytes: 1024, browser: "/usr/bin/chromium",
+        },
+      }, { expanded: false }, theme).render(140).join("\n");
+      expect(result).toContain("report-2.pdf");
+      expect(result).toContain("1.0 KiB");
+    } finally { await rm(root, { recursive: true, force: true }); }
+  });
 });
