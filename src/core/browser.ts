@@ -9,7 +9,8 @@ export class BrowserNotFoundError extends Error {
 }
 function pathsInEnvironment(name: string): string[] {
   const suffixes = process.platform === "win32" ? ["", ".exe", ".cmd"] : [""];
-  return (process.env.PATH ?? "").split(path.delimiter).flatMap(dir => suffixes.map(ext => path.join(dir, name + ext)));
+  return (process.env.PATH ?? "").split(path.delimiter).filter(dir => path.isAbsolute(dir))
+    .flatMap(dir => suffixes.map(ext => path.join(dir, name + ext)));
 }
 function candidates(platform = process.platform, env = process.env): string[] {
   if (platform === "win32") {
@@ -23,7 +24,7 @@ function candidates(platform = process.platform, env = process.env): string[] {
   if (platform === "darwin") {
     return [
       "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-      path.join(env.HOME ?? "", "Applications/Google Chrome.app/Contents/MacOS/Google Chrome"),
+      ...(env.HOME ? [path.join(env.HOME, "Applications/Google Chrome.app/Contents/MacOS/Google Chrome")] : []),
       "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
       "/Applications/Chromium.app/Contents/MacOS/Chromium",
     ];
