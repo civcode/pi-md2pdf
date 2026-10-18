@@ -18,7 +18,9 @@ export default function piMd2Pdf(pi: ExtensionAPI): void {
   // Pi's autocomplete callback does not receive a command context. Track the
   // active session cwd, falling back to the process directory during startup.
   let completionCwd = process.cwd();
-  pi.on("session_start", (_event, ctx) => { completionCwd = ctx.cwd; });
+  if (typeof pi.on === "function") {
+    pi.on("session_start", (_event, ctx) => { completionCwd = ctx.cwd; });
+  }
   pi.registerCommand("md2pdf", {
     description: `/md2pdf FILE.md [OUT.pdf] [--toc] [--number-sections] [--paper a4|letter] [--force] (defaults: ${DEFAULTS.paper}, no TOC)`,
     getArgumentCompletions: (prefix) => getMd2pdfArgumentCompletions(prefix, completionCwd),
