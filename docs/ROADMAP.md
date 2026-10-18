@@ -9,12 +9,12 @@
 
 The `feat/initial-implementation` branch now contains the v1 source implementation, CLI, Pi integration, print CSS, test suites, fixtures, and documentation.
 
-- **Phases 0–1:** code/architecture and project structure prepared; dependency installation and package lockfile are pending.
-- **Phases 2–4:** renderer, CLI, and Pi extension implemented in source; **functional verification is pending**.
+- **Phases 0–1:** architecture and project structure complete; a clean `npm ci` has passed on Linux with the committed lockfile.
+- **Phases 2–4:** renderer, CLI and Pi extension implemented, typechecked and exercised on Linux, including the real Pi loader.
 - **Phase 5:** Linux test suite completed (40/40); PDF reference comparisons and native Windows/macOS runs are still pending.
-- **Phase 6:** README, license, npm manifest and Pi package metadata prepared. Publishing, release tagging and npm gallery discovery are **not performed**.
+- **Phase 6:** v0.1.0 changelog, notices, release checklist, public npm manifest and prepack build safeguard prepared. Packaging changes still require the next local validation run. No tag, merge, npm publish or gallery listing has been performed.
 
-See [VALIDATION.md](VALIDATION.md) for the exact environment limitations and remaining release blockers. Do not interpret source completion as a verified v1 release.
+See [VALIDATION.md](VALIDATION.md) and [RELEASE.md](RELEASE.md) for the completed Linux checks, release-candidate validation and remaining blockers. Do not interpret source completion as a verified v1 release.
 
 ## Delivery principles
 
