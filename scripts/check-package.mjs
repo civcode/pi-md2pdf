@@ -6,7 +6,7 @@
  * Never publishes or mutates global Pi/npm installations.
  */
 import { spawnSync } from "node:child_process";
-import { mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import os from "node:os";
 import path from "node:path";
@@ -16,6 +16,14 @@ const temp = await mkdtemp(path.join(os.tmpdir(), "pi-md2pdf-package-"));
 const dest = path.join(temp, "packed");
 const install = path.join(temp, "consumer");
 const env = { ...process.env, NPM_CONFIG_UPDATE_NOTIFIER: "false" };
+function npmRun(args, cwd = project) {
+  // npm scripts expose the actual npm CLI JavaScript entry point. Using Node
+  // directly avoids .cmd spawn differences on native Windows.
+  if (process.env.npm_execpath) {
+    return run(process.execPath, [process.env.npm_execpath, ...args], cwd);
+  }
+  return run(process.platform === "win32" ? "npm.cmd" : "npm", args, cwd);
+}
 function run(bin, args, cwd = project) {
   const result = spawnSync(bin, args, {
     cwd, env, encoding: "utf8", timeout: 180_000,
@@ -28,14 +36,16 @@ function run(bin, args, cwd = project) {
   return result.stdout;
 }
 try {
-  await import("node:fs/promises").then(fs => fs.mkdir(dest, { recursive: true }));
-  const metadata = JSON.parse(run("npm", ["pack", "--json", "--ignore-scripts", "--pack-destination", dest]));
+  await mkdir(dest, { recursive: true });
+  console.log("Packing pi-md2pdf into a temporary directory...");
+  const metadata = JSON.parse(npmRun(["pack", "--json", "--ignore-scripts", "--pack-destination", dest]));
   if (!Array.isArray(metadata) || !metadata[0]?.filename) throw new Error("npm pack returned no tarball");
   const tarball = path.join(dest, metadata[0].filename);
   await stat(tarball);
   // A normal consumer must be able to install *only* the published artifact.
   // Ignoring install scripts avoids arbitrary postinstall execution.
-  run("npm", ["install", "--prefix", install, "--omit=dev", "--ignore-scripts",
+  console.log("Installing the tarball in a clean isolated npm prefix...");
+  npmRun(["install", "--prefix", install, "--omit=dev", "--ignore-scripts",
     "--no-audit", "--no-fund", "--no-save", tarball], temp);
   const packageRoot = path.join(install, "node_modules", "pi-md2pdf");
   const cli = path.join(packageRoot, "dist", "cli.js");
@@ -46,10 +56,12 @@ try {
   if (!help.includes("md2pdf input.md")) throw new Error("Packed CLI help is missing");
 
   // Check the installed extension with Pi's real loader, not a mocked API.
+  console.log("Verifying package with the real Pi extension loader...");
   const loader = path.join(project, "scripts", "check-load.mjs");
   const loaded = run(process.execPath, [loader, packageRoot], project);
   process.stdout.write(loaded);
 
+  console.log("Rendering sample PDF from the installed CLI...");
   const md = path.join(temp, "fixture.md");
   await writeFile(md, "# Package smoke test\n\n| Check | Result |\n|---|---|\n| PDF | OK |\n");
   const output = path.join(temp, "fixture.pdf");
