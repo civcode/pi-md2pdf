@@ -56,7 +56,7 @@ export function parseArgs(argv: string[], allowPositionalOutput = false): Parsed
 export const HELP = `Usage: md2pdf input.md [-o output.pdf] [options]
 
 Options:
-  -o, --output PATH      Destination (default: input.pdf beside input)
+  -o, --output PATH      Explicit PDF path; fail if occupied (unless --force)\n                         Omitted: input.pdf, then input-2.pdf, input-3.pdf, ...
       --toc              Add linked table of contents (default: ${DEFAULTS.toc})
       --number-sections  Add heading numbering (default: ${DEFAULTS.numberSections})
       --paper a4|letter  Page format (default: ${DEFAULTS.paper})
