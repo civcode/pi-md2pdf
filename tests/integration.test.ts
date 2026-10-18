@@ -19,6 +19,12 @@ describe.skipIf(!available)("headless PDF rendering (requires installed Chromium
       const pdf = await readFile(output);
       expect(pdf.subarray(0, 5).toString()).toBe("%PDF-");
       await expect(convertMarkdownToPdf({ input, output })).rejects.toThrow("exists");
+      const implicit = await convertMarkdownToPdf({ input });
+      const numbered = await convertMarkdownToPdf({ input });
+      expect(implicit.output).toBe(path.join(dir, "demo-2.pdf"));
+      expect(numbered.output).toBe(path.join(dir, "demo-3.pdf"));
+      expect((await readFile(implicit.output)).subarray(0, 5).toString()).toBe("%PDF-");
+      expect((await readFile(numbered.output)).subarray(0, 5).toString()).toBe("%PDF-");
     } finally { await rm(dir, { recursive: true, force: true }); }
   }, 90_000);
 });
