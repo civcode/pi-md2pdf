@@ -6,6 +6,7 @@ import { defineTool, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { convertMarkdownToPdf } from "./core/convert.js";
 import { DEFAULTS } from "./core/options.js";
 import { HELP, parseArgs, tokenizeCommand } from "./core/argv.js";
+import { resolveWorkspacePaths } from "./core/workspace.js";
 
 async function exists(file: string): Promise<boolean> {
   try { await access(file, constants.F_OK); return true; } catch { return false; }
@@ -45,20 +46,22 @@ export default function piMd2Pdf(pi: ExtensionAPI): void {
   pi.registerTool(defineTool({
     name: "markdown_to_pdf",
     label: "Markdown to PDF",
-    description: `Convert a local Markdown file to PDF using the ${DEFAULTS.theme} theme. Defaults: paper=${DEFAULTS.paper}, toc=${DEFAULTS.toc}, numberSections=${DEFAULTS.numberSections}, overwrite=${DEFAULTS.overwrite}, outputConflict=${DEFAULTS.outputConflict}. For a plain conversion request, preserve the author's headings and layout; do NOT add a TOC or section numbering, even for lengthy documents. Only set toc=true when the user explicitly requests a table of contents, and numberSections=true when the user explicitly requests automatic heading numbers. When the user has not chosen an output filename and the default PDF exists, save to a new numbered filename (-2, -3, etc.) automatically without asking. If the user explicitly specifies an occupied output filename, refuse unless overwrite is authorized. Never overwrite an existing file without the user's explicit authorization.`,
+    description: `Convert a local Markdown file to PDF using the ${DEFAULTS.theme} theme. Defaults: paper=${DEFAULTS.paper}, toc=${DEFAULTS.toc}, numberSections=${DEFAULTS.numberSections}, overwrite=${DEFAULTS.overwrite}, outputConflict=${DEFAULTS.outputConflict}. IMPORTANT PATH RULE: Resolve filenames ONLY relative to Pi's current working directory. NEVER search the home directory, parent directories, or other projects for a same-named Markdown file. If the file is missing, report it without substituting another file. The agent tool refuses files outside the current working directory (including symlinks); users can explicitly use /md2pdf for cross-directory inputs. For a plain conversion request, preserve the author's headings and layout; do NOT add a TOC or section numbering, even for lengthy documents. Only set toc=true when the user explicitly requests a table of contents, and numberSections=true when the user explicitly requests automatic heading numbers. When the user has not chosen an output filename and the default PDF exists, save to a new numbered filename (-2, -3, etc.) automatically without asking. If the user explicitly specifies an occupied output filename, refuse unless overwrite is authorized. Never overwrite an existing file without the user's explicit authorization.`,
     parameters: Type.Object({
-      input: Type.String({ description: "Required local Markdown file path, relative to Pi working directory or absolute." }),
-      output: Type.Optional(Type.String({ description: "Optional explicitly requested PDF output path. When omitted, save beside input using its basename and .pdf extension; if it already exists, automatically choose -2, -3, etc., without asking. Explicit occupied output filenames are never renamed silently." })),
+      input: Type.String({ description: "Required existing Markdown path within Pi's current working directory. Relative paths resolve only against ctx.cwd. Absolute paths are allowed ONLY when within ctx.cwd. Do NOT search other directories for a matching filename." }),
+      output: Type.Optional(Type.String({ description: "Optional PDF output path within Pi's current working directory. When omitted, save beside input using its basename and .pdf extension; if it already exists, automatically choose -2, -3, etc. Explicit occupied filenames are never renamed silently." })),
       paper: Type.Optional(Type.Union([Type.Literal("a4"), Type.Literal("letter")], { description: `PDF paper format. Default: ${DEFAULTS.paper}. Choose letter only if requested.` })),
       toc: Type.Optional(Type.Boolean({ description: `Add a linked table of contents ONLY if the user requests one. Default: ${DEFAULTS.toc}. A TOC may add many pages.` })),
       numberSections: Type.Optional(Type.Boolean({ description: `Add automatic section numbering ONLY if requested. Default: ${DEFAULTS.numberSections}. Existing heading numbers are preserved.` })),
       overwrite: Type.Optional(Type.Boolean({ description: `Overwrite an existing PDF ONLY with explicit user authorization. Default: ${DEFAULTS.overwrite}.` })),
     }),
     async execute(_toolCallId, params, signal, onUpdate, ctx) {
+      // Check scope before Chromium runs; model-selected external paths are refused.
+      const paths = await resolveWorkspacePaths(ctx.cwd, params.input, params.output);
       onUpdate?.({ content: [{ type: "text", text: "Rendering Markdown PDF…" }], details: { status: "rendering" } });
       const result = await convertMarkdownToPdf({
-        input: path.resolve(ctx.cwd, params.input),
-        output: params.output ? path.resolve(ctx.cwd, params.output) : undefined,
+        input: paths.input,
+        output: paths.output,
         paper: params.paper,
         toc: params.toc,
         numberSections: params.numberSections,
