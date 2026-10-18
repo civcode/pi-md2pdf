@@ -195,6 +195,10 @@ prefix, checks the packaged CLI and extension loader, and renders a real PDF
 with an existing Chrome/Edge/Chromium binary. It requires npm access (or a
 warm cache) and a headless browser; it cleans up after completion.
 
+For complete Linux release acceptance, including one-command real-Pi tests
+and manual command completion/confirmation checks, see
+[the testing guide](docs/TESTING.md).
+
 Additional unit tests cover browser failure, cancellation, timeout,
 atomic non-overwrite cleanup, and Windows/UNC path containment (using
 `path.win32` on any host). These tests do not replace native Windows/macOS
