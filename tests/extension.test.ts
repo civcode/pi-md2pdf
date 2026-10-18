@@ -45,6 +45,28 @@ describe("Pi agent tool documentation", () => {
     expect(schemaText).toContain("authorization");
   });
 
+  it("rejects -o in the real Pi command handler but accepts CLI-style long output", async () => {
+    let command: { handler: (args: string, ctx: unknown) => Promise<void> } | undefined;
+    piMd2Pdf({
+      registerCommand(_name: string, registered: typeof command) { command = registered; },
+      registerTool() {},
+    } as unknown as ExtensionAPI);
+    expect(command).toBeDefined();
+    const messages: string[] = [];
+    const context = {
+      cwd: process.cwd(), hasUI: true,
+      signal: new AbortController().signal,
+      ui: { notify(message: string) { messages.push(message); } },
+    };
+    await command!.handler("report.md -o output.pdf", context);
+    expect(messages.join("\\n")).toMatch(/Unknown option: -o/);
+    expect(messages).not.toContain("Converting Markdown to PDF…");
+    messages.length = 0;
+    await command!.handler("--help", context);
+    expect(messages.join("\\n")).toContain("--output PATH");
+    expect(messages.join("\\n")).not.toContain("-o, --output");
+  });
+
   it("hard-blocks outside-workspace files at the Pi tool boundary", async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "md2pdf-tool-boundary-"));
     try {
