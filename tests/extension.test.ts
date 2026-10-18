@@ -24,6 +24,9 @@ describe("Pi agent tool documentation", () => {
     expect(description).toContain(`toc=${DEFAULTS.toc}`);
     expect(description).toContain(`numberSections=${DEFAULTS.numberSections}`);
     expect(description).toContain(`overwrite=${DEFAULTS.overwrite}`);
+    expect(description).toContain(`outputConflict=${DEFAULTS.outputConflict}`);
+    expect(description).toContain("automatically without asking");
+    expect(description).toContain("explicitly specifies an occupied output");
     expect(description).toContain("explicitly requests");
     expect(description).toContain("plain conversion");
     const schemaText = JSON.stringify(tools[0]!.parameters);
