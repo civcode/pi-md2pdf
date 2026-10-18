@@ -148,6 +148,14 @@ No calendar deadlines or guaranteed durations are assumed. Phases may be split i
 
 **Suggested commit:** `docs: prepare pi-md2pdf release candidate`.
 
+## Pi interactive usability — v0.1.0
+
+- [x] Add `/md2pdf` filename/flag/paper argument completion with descriptions.
+- [x] Add compact agent tool call and result rendering, with actual output name and expanded details.
+- [x] Add tests for quoted/nested filenames, exact tokens, flag values and output rendering.
+- [ ] Run TypeScript/Vitest, Pi real-loader and package smoke tests on the updated branch.
+- [ ] Manually verify Tab selection and Enter behavior in an interactive Pi session.
+
 ## Extra pre-release verification (implemented, pending execution)
 
 - [x] Add `npm run check:load` using Pi's real extension loader.
