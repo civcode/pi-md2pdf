@@ -47,8 +47,10 @@
     "check:package": "node scripts/check-package.mjs"
   },
   "dependencies": {
+    "@mdit/plugin-tex": "0.22.1",
     "github-markdown-css": "^5.8.1",
     "highlight.js": "^11.11.1",
+    "katex": "0.19.1",
     "markdown-it": "^14.1.0",
     "puppeteer-core": "^25.14.0"
   },

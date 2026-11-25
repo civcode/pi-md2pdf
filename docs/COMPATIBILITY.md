@@ -2,9 +2,11 @@
 
 The v1 targets Node.js >=22.19.0, current Pi extension APIs (`@earendil-works/pi-coding-agent`), and a locally installed modern Chrome, Chromium, or Microsoft Edge executable.
 
-Runtime dependencies: `markdown-it`, `highlight.js`, `github-markdown-css`, and `puppeteer-core`. Pi-provided APIs stay in peer dependencies. The PDF engine is headless and requires a compatible browser executable; no browser is bundled.
+Runtime dependencies: `markdown-it`, `highlight.js`, `github-markdown-css`, `@mdit/plugin-tex`, `katex`, and `puppeteer-core`. Math CSS/fonts come from the installed KaTeX package and are embedded in HTML; no additional runtime browser or network dependency. Pi-provided APIs stay in peer dependencies. The PDF engine is headless and requires a compatible browser executable; no browser is bundled.
 
 ## Validation matrix
+
+The following is the pre-math baseline; the math feature branch requires fresh validation.
 
 | Host | Browser | Verification |
 | --- | --- | --- |

@@ -195,7 +195,7 @@ None of these decisions changes the locked v1 product scope.
 
 ## Post-v1 backlog (not release blockers)
 
-- Mermaid and math support.
+- Mermaid support. TeX/LaTeX math support is implemented on the math feature branch, pending local acceptance testing.
 - Alternative themes, fonts, templates and headers/footers.
 - Printed page-number-aware TOC.
 - Batch conversion and watch mode.

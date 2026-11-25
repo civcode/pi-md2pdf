@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
 import puppeteer from "puppeteer-core";
 import { renderMarkdown } from "./markdown.js";
+import { mathStylesheet } from "./math.js";
 import { DEFAULTS, prepareOptions, type ConversionOptions, type PreparedOptions } from "./options.js";
 import { resolveBrowser, browserVersion } from "./browser.js";
 import { publishPdf } from "./output.js";
@@ -12,7 +13,7 @@ const require = createRequire(import.meta.url);
 function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]!);
 }
-async function stylesheet(): Promise<string> {
+async function stylesheet(hasMath: boolean): Promise<string> {
   const github = require.resolve("github-markdown-css/github-markdown-light.css");
   const moduleDir = path.dirname(fileURLToPath(import.meta.url));
   // tsup places the entry points in dist/; Vitest executes src/core/convert.ts directly.
@@ -33,11 +34,12 @@ async function stylesheet(): Promise<string> {
   if (printCss === undefined) {
     throw new Error("Print stylesheet missing; expected styles/print.css in the project or npm package");
   }
-  return (await readFile(github, "utf8")) + "\n" + printCss;
+  return (await readFile(github, "utf8")) + "\n" +
+    (hasMath ? await mathStylesheet() : "") + "\n" + printCss;
 }
 export async function buildHtml(source: string, input: string, opts: { toc: boolean; numberSections: boolean }): Promise<string> {
   const rendered = await renderMarkdown(source, input, opts);
-  const css = (await stylesheet()).replace(/<\/style/gi, "<\\/style");
+  const css = (await stylesheet(rendered.html.includes('<span class="katex"'))).replace(/<\/style/gi, "<\\/style");
   const title = path.basename(input).replace(/\.(md|markdown)$/i, "");
   return "<!doctype html><html lang=\"en\" data-md2pdf-theme=\"" + DEFAULTS.theme + "\"><head><meta charset=\"utf-8\">" +
     "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">" +

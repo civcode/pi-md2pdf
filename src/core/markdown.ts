@@ -2,6 +2,7 @@ import MarkdownIt from "markdown-it";
 import hljs from "highlight.js";
 import Token from "markdown-it/lib/token.mjs";
 import { inlineLocalImages } from "./assets.js";
+import { enableMath, renderMath } from "./math.js";
 
 export interface RenderOptions { toc: boolean; numberSections: boolean }
 export interface RenderResult { html: string; headings: { level: number; title: string; id: string }[] }
@@ -22,12 +23,14 @@ const md = new MarkdownIt({
     return '<pre class="hljs"><code>' + highlighted + "</code></pre>";
   },
 });
+enableMath(md);
 export async function renderMarkdown(source: string, input: string, opts: RenderOptions): Promise<RenderResult> {
   const env = {};
   const tokens = md.parse(source, env);
   const used = new Set<string>();
   const counters = [0, 0, 0, 0, 0, 0];
   const headings: RenderResult["headings"] = [];
+  const tocTitles = new Map<string, string>();
   // Existing structured section numbers belong to the author, not the converter.
   // If a document is already numbered, adding generated prefixes would produce
   // headings such as "1.1 1. Purpose" and obscure the original organization.
@@ -49,6 +52,14 @@ export async function renderMarkdown(source: string, input: string, opts: Render
     used.add(id);
     token.attrSet("id", id);
     headings.push({ level, title, id });
+    // Render math in TOC titles without introducing nested links or raw HTML.
+    if (opts.toc && inline.children?.some(child => child.type === "math_inline")) {
+      tocTitles.set(id, inline.children.map(child =>
+        child.type === "math_inline" ? renderMath(child.content, false) :
+        child.type === "softbreak" || child.type === "hardbreak" ? " " :
+        child.nesting === 0 ? escapeHtml(child.content) : "",
+      ).join(""));
+    }
     if (autoNumber && level >= 1 && level <= 6) {
       counters[level - 1]!++;
       counters.fill(0, level);
@@ -68,7 +79,7 @@ export async function renderMarkdown(source: string, input: string, opts: Render
   const body = md.renderer.render(tokens, md.options, env);
   const toc = opts.toc && headings.length
     ? '<nav class="md2pdf-toc" aria-label="Table of contents"><h2>Table of contents</h2><ul>' +
-      headings.map(h => '<li class="toc-level-' + h.level + '"><a href="#' + encodeURIComponent(h.id) + '">' + escapeHtml(h.title) + "</a></li>").join("") + "</ul></nav>"
+      headings.map(h => '<li class="toc-level-' + h.level + '"><a href="#' + encodeURIComponent(h.id) + '">' + (tocTitles.get(h.id) ?? escapeHtml(h.title)) + "</a></li>").join("") + "</ul></nav>"
     : "";
   return { html: toc + body, headings };
 }

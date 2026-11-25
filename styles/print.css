@@ -41,3 +41,7 @@ body.markdown-body { box-sizing: border-box; margin: 0; padding: 0; color: #1f23
   *, *::before, *::after { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
   .markdown-body { max-width: none; }
 }
+
+/* Keep display equations together. Oversized formulas should be split with aligned. */
+.markdown-body .katex-display { break-inside: avoid; page-break-inside: avoid; max-width: 100%; }
+.markdown-body .katex { text-indent: 0; }

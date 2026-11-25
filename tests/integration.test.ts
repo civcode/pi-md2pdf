@@ -7,6 +7,18 @@ import { resolveBrowser } from "../src/core/browser.js";
 
 const available = (() => { try { resolveBrowser(); return true; } catch { return false; } })();
 describe.skipIf(!available)("headless PDF rendering (requires installed Chromium)", () => {
+  it("prints the math probe with locally embedded fonts", async () => {
+    const dir = await mkdtemp(path.join(os.tmpdir(), "md2pdf-math-"));
+    try {
+      const input = path.join(dir, "mathtest.md");
+      const output = path.join(dir, "mathtest.pdf");
+      await writeFile(input, await readFile(new URL("./fixtures/mathtest.md", import.meta.url)));
+      await convertMarkdownToPdf({ input, output });
+      const pdf = await readFile(output);
+      expect(pdf.subarray(0, 5).toString()).toBe("%PDF-");
+      expect(pdf.toString("latin1")).toMatch(/KaTeX[_-]/);
+    } finally { await rm(dir, { recursive: true, force: true }); }
+  }, 90_000);
   it("starts browser and generates a real PDF", async () => {
     const check = await checkBrowser();
     expect(check.pdfBytes).toBeGreaterThan(200);

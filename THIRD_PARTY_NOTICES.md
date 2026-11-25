@@ -8,6 +8,8 @@ Its runtime depends on the following open-source software:
 | [github-markdown-css](https://github.com/sindresorhus/github-markdown-css) | MIT | [License](https://github.com/sindresorhus/github-markdown-css/blob/main/license) |
 | [highlight.js](https://github.com/highlightjs/highlight.js) | BSD-3-Clause | [License](https://github.com/highlightjs/highlight.js/blob/main/LICENSE) |
 | [markdown-it](https://github.com/markdown-it/markdown-it) | MIT | [License](https://github.com/markdown-it/markdown-it/blob/master/LICENSE) |
+| [@mdit/plugin-tex](https://github.com/mdit-plugins/mdit-plugins) | MIT | [License](https://github.com/mdit-plugins/mdit-plugins/blob/main/LICENSE) |
+| [KaTeX](https://github.com/KaTeX/KaTeX) | MIT | [License](https://github.com/KaTeX/KaTeX/blob/main/LICENSE) |
 | [puppeteer-core](https://github.com/puppeteer/puppeteer) | Apache-2.0 | [License](https://github.com/puppeteer/puppeteer/blob/main/LICENSE) |
 
 The Markdown CSS is loaded from `github-markdown-css` at runtime and is
@@ -17,8 +19,7 @@ are reproduced below. Other package dependencies and their licenses remain
 in the installed npm dependency tree.
 
 The `puppeteer-core` dependency does **not** bundle Chrome, Chromium, or
-Microsoft Edge. Browser binaries and any fonts are installed and licensed
-separately by the user or operating system.
+Microsoft Edge. Browser binaries and system fonts are installed and licensed separately by the user or operating system. KaTeX math fonts are supplied by the KaTeX npm dependency; its license and font notices must be retained and checked before publication.
 
 The list reflects direct runtime dependencies checked against upstream license
 files. Before publication, also verify the installed dependency versions and
