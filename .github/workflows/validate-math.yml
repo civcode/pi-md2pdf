@@ -1,6 +1,9 @@
-name: Validate math rendering (manual)
+name: Validate math rendering
 
 on:
+  push:
+    branches:
+      - feat/latex-math-support
   workflow_dispatch:
 
 permissions:
