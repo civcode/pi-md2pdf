@@ -1,0 +1,35 @@
+name: Validate math rendering (manual)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Select installed browser
+        shell: bash
+        run: |
+          browser="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+          test -x "$browser"
+          echo "MD2PDF_BROWSER_PATH=$browser" >> "$GITHUB_ENV"
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - name: Render math probe
+        run: node dist/cli.js tests/fixtures/mathtest.md -o mathtest.pdf --toc
+      - uses: actions/upload-artifact@v4
+        with:
+          name: math-probe-pdf
+          path: mathtest.pdf
+          if-no-files-found: error

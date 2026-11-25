@@ -39,6 +39,10 @@ describe("offline TeX math", () => {
       .rejects.toThrow("Invalid or unsupported TeX math");
     expect(renderMath(String.raw`\href{https://example.com}{x}`, false)).not.toContain('href="https://example.com"');
   });
+  it("rejects unclosed dollar display math instead of swallowing following content", async () => {
+    await expect(renderMarkdown("$$\\n x^2\\n\\n# Later heading".replace(/\\n/g, "\n"), "/tmp/math.md", opts))
+      .rejects.toThrow("Unclosed $$ math block");
+  });
   it("embeds fonts in math HTML without enabling remote assets", async () => {
     const html = await buildHtml(String.raw`$\sqrt{x}$`, "/tmp/math.md", opts);
     expect(html).toContain("data:font/woff2;base64,");

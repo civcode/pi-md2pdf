@@ -22,6 +22,19 @@ export function renderMath(source: string, displayMode: boolean): string {
 
 export function enableMath(md: MarkdownIt): void {
   md.use(tex, { delimiters: "all", mathFence: true, allowInlineWithSpace: false, render: renderMath });
+  // The upstream dollar block parser can consume the rest of a document
+  // without a closing marker. Reject that case instead of losing text.
+  md.core.ruler.after("block", "check_closed_math", state => {
+    const lines = state.src.split("\n");
+    for (const token of state.tokens) {
+      if (token.type !== "math_block" || token.markup !== "$$" || !token.map) continue;
+      const [start, end] = token.map;
+      const last = (lines[end - 1] ?? "").trimEnd();
+      if (!last.endsWith("$$") || (end === start + 1 && !last.slice(0, -2).includes("$$"))) {
+        throw new Error("Unclosed $$ math block at line " + (start + 1));
+      }
+    }
+  });
   // Treat a bare latex fence as a display equation, just like a math fence.
   // Other fence labels (including tex) still render as source code.
   const fence = md.renderer.rules.fence!;
