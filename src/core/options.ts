@@ -2,6 +2,11 @@ import path from "node:path";
 import { stat, realpath } from "node:fs/promises";
 
 export type Paper = "a4" | "letter";
+export type MermaidErrorMode = "strict" | "placeholder" | "source";
+export function parseMermaidErrorMode(value: unknown): MermaidErrorMode {
+  if (value === "strict" || value === "placeholder" || value === "source") return value;
+  throw new Error("Invalid Mermaid error mode: " + String(value) + " (expected strict, placeholder or source)");
+}
 
 /**
  * Single source of truth for behavior shared by the CLI, Pi slash command,
@@ -12,6 +17,7 @@ export const DEFAULTS = {
   paper: "a4",
   toc: false,
   numberSections: false,
+  mermaidErrors: "placeholder",
   overwrite: false,
   outputConflict: "increment",
   theme: "github-light",
@@ -23,6 +29,7 @@ export interface ConversionOptions {
   paper?: Paper;
   toc?: boolean;
   numberSections?: boolean;
+  mermaidErrors?: MermaidErrorMode;
   overwrite?: boolean;
   browserPath?: string;
   signal?: AbortSignal;
@@ -59,6 +66,7 @@ export async function prepareOptions(opts: ConversionOptions): Promise<PreparedO
   return { input, output, paper,
     toc: opts.toc ?? DEFAULTS.toc,
     numberSections: opts.numberSections ?? DEFAULTS.numberSections,
+    mermaidErrors: parseMermaidErrorMode(opts.mermaidErrors ?? DEFAULTS.mermaidErrors),
     overwrite: opts.overwrite ?? DEFAULTS.overwrite,
     browserPath: opts.browserPath, signal: opts.signal, timeoutMs };
 }

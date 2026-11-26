@@ -6,13 +6,14 @@ const FLAGS: AutocompleteItem[] = [
   { value: "--toc", label: "--toc", description: "Add linked table of contents (off by default)" },
   { value: "--number-sections", label: "--number-sections", description: "Add heading numbers (off by default)" },
   { value: "--paper", label: "--paper", description: "Paper size: a4 (default) or letter" },
+  { value: "--mermaid-errors", label: "--mermaid-errors", description: "Failed diagrams: placeholder (default), source or strict" },
   { value: "--output", label: "--output", description: "Explicit PDF output filename" },
   { value: "--browser-path", label: "--browser-path", description: "Use a particular Chromium/Chrome/Edge binary" },
   { value: "--force", label: "--force", description: "Overwrite an explicit output (use cautiously)" },
   { value: "--help", label: "--help", description: "Show md2pdf usage" },
 ];
 
-const VALUE_FLAGS = new Set(["--paper", "--output", "--browser-path"]);
+const VALUE_FLAGS = new Set(["--paper", "--output", "--browser-path", "--mermaid-errors"]);
 
 interface CursorTokens {
   previous: string[];
@@ -136,6 +137,13 @@ export function getMd2pdfArgumentCompletions(
     return optionSuggestions([
       { value: "a4", label: "a4", description: "A4 (default)" },
       { value: "letter", label: "letter", description: "US Letter" },
+    ], current, before, []);
+  }
+  if (last === "--mermaid-errors") {
+    return optionSuggestions([
+      { value: "placeholder", label: "placeholder", description: "Diagnostic and source (default)" },
+      { value: "source", label: "source", description: "Source only" },
+      { value: "strict", label: "strict", description: "Abort conversion" },
     ], current, before, []);
   }
   if (last && VALUE_FLAGS.has(last)) return null;

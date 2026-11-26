@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
 import puppeteer from "puppeteer-core";
 import { renderMarkdown, type RenderOptions } from "./markdown.js";
-import { createMermaidRenderer, type MermaidRenderer } from "./mermaid.js";
+import { createMermaidRenderer, type MermaidRenderer, type MermaidDiagnostic } from "./mermaid.js";
 import { mathStylesheet } from "./math.js";
 import { DEFAULTS, prepareOptions, type ConversionOptions, type PreparedOptions } from "./options.js";
 import { resolveBrowser, browserVersion } from "./browser.js";
@@ -38,20 +38,24 @@ async function stylesheet(hasMath: boolean): Promise<string> {
   return (await readFile(github, "utf8")) + "\n" +
     (hasMath ? await mathStylesheet() : "") + "\n" + printCss;
 }
-export async function buildHtml(source: string, input: string, opts: RenderOptions): Promise<string> {
+async function buildDocument(source: string, input: string, opts: RenderOptions): Promise<{ html: string; mermaidDiagnostics: MermaidDiagnostic[] }> {
   const rendered = await renderMarkdown(source, input, opts);
   const css = (await stylesheet(rendered.html.includes('<span class="katex"'))).replace(/<\/style/gi, "<\\/style");
   const title = path.basename(input).replace(/\.(md|markdown)$/i, "");
-  return "<!doctype html><html lang=\"en\" data-md2pdf-theme=\"" + DEFAULTS.theme + "\"><head><meta charset=\"utf-8\">" +
+  const html = "<!doctype html><html lang=\"en\" data-md2pdf-theme=\"" + DEFAULTS.theme + "\"><head><meta charset=\"utf-8\">" +
     "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">" +
     "<title>" + escapeHtml(title) + "</title><style>" + css + "</style></head>" +
     '<body class="markdown-body">' + rendered.html + "</body></html>";
+  return { html, mermaidDiagnostics: rendered.mermaidDiagnostics };
+}
+export async function buildHtml(source: string, input: string, opts: RenderOptions): Promise<string> {
+  return (await buildDocument(source, input, opts)).html;
 }
 function abortError(signal?: AbortSignal): Error {
   const timedOut = (signal?.reason as { name?: string } | undefined)?.name === "TimeoutError";
   return Object.assign(new Error(timedOut ? "PDF conversion timed out" : "PDF conversion cancelled"), { name: timedOut ? "TimeoutError" : "AbortError" });
 }
-async function renderPdf(source: string, opts: PreparedOptions, pdfPath: string): Promise<void> {
+async function renderPdf(source: string, opts: PreparedOptions, pdfPath: string): Promise<MermaidDiagnostic[]> {
   const browserPath = resolveBrowser(opts.browserPath);
   if (opts.signal?.aborted) throw abortError(opts.signal);
   const browser = await puppeteer.launch({ executablePath: browserPath, headless: true,
@@ -63,9 +67,9 @@ async function renderPdf(source: string, opts: PreparedOptions, pdfPath: string)
     // Lazily open an isolated JS-enabled context only for Mermaid blocks.
     // Close it before the final JS-disabled page is even created.
     let diagrams: MermaidRenderer | undefined;
-    let html: string;
+    let document: Awaited<ReturnType<typeof buildDocument>>;
     try {
-      html = await buildHtml(source, opts.input, {
+      document = await buildDocument(source, opts.input, {
         ...opts,
         renderMermaid: async definition => {
           if (opts.signal?.aborted) throw abortError(opts.signal);
@@ -85,13 +89,14 @@ async function renderPdf(source: string, opts: PreparedOptions, pdfPath: string)
       else void request.abort("blockedbyclient");
     });
     page.setDefaultTimeout(opts.timeoutMs);
-    await page.setContent(html, { waitUntil: "load", timeout: opts.timeoutMs });
+    await page.setContent(document.html, { waitUntil: "load", timeout: opts.timeoutMs });
     await page.emulateMediaType("print");
     if (opts.signal?.aborted) throw abortError(opts.signal);
     await page.pdf({ path: pdfPath, format: opts.paper === "a4" ? "A4" : "Letter",
       margin: { top: "10mm", right: "10mm", bottom: "10mm", left: "10mm" },
       printBackground: true, timeout: opts.timeoutMs });
     if (opts.signal?.aborted) throw abortError(opts.signal);
+    return document.mermaidDiagnostics;
   } catch (error) {
     // Browser closure during cancellation can surface as "Target closed".
     // Report the original abort/timeout instead of a misleading browser error.
@@ -102,7 +107,7 @@ async function renderPdf(source: string, opts: PreparedOptions, pdfPath: string)
     await browser.close().catch(() => {});
   }
 }
-export interface ConversionResult { input: string; output: string; bytes: number; browser: string }
+export interface ConversionResult { input: string; output: string; bytes: number; browser: string; mermaidDiagnostics: MermaidDiagnostic[] }
 export async function convertMarkdownToPdf(options: ConversionOptions): Promise<ConversionResult> {
   const opts = await prepareOptions(options);
   opts.signal = opts.signal ? AbortSignal.any([opts.signal, AbortSignal.timeout(opts.timeoutMs)]) : AbortSignal.timeout(opts.timeoutMs);
@@ -121,7 +126,7 @@ export async function convertMarkdownToPdf(options: ConversionOptions): Promise<
   const tmp = await mkdtemp(path.join(path.dirname(opts.output), ".md2pdf-"));
   const tempOutput = path.join(tmp, "rendered.pdf");
   try {
-    await renderPdf(source, opts, tempOutput);
+    const mermaidDiagnostics = await renderPdf(source, opts, tempOutput);
     const buffer = await readFile(tempOutput);
     if (buffer.byteLength < 5 || buffer.subarray(0, 5).toString("ascii") !== "%PDF-") {
       throw new Error("Browser returned an invalid PDF");
@@ -130,7 +135,7 @@ export async function convertMarkdownToPdf(options: ConversionOptions): Promise<
     const output = await publishPdf(tempOutput, opts.output, {
       overwrite: opts.overwrite, increment, signal: opts.signal,
     });
-    return { input: opts.input, output, bytes: buffer.byteLength, browser };
+    return { input: opts.input, output, bytes: buffer.byteLength, browser, mermaidDiagnostics };
   } finally {
     await rm(tmp, { recursive: true, force: true });
   }

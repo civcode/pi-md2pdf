@@ -49,3 +49,8 @@ body.markdown-body { box-sizing: border-box; margin: 0; padding: 0; color: #1f23
 /* Mermaid SVGs are inert image data, scaled to the printable page. */
 .markdown-body .md2pdf-mermaid { margin: 1em 0; break-inside: avoid; page-break-inside: avoid; text-align: center; }
 .markdown-body .md2pdf-mermaid img { display: block; margin: 0 auto; max-width: 100%; max-height: 235mm; width: auto; height: auto; object-fit: contain; }
+
+/* A rejected diagram is never embedded; only escaped diagnostics/source. */
+.markdown-body .md2pdf-mermaid-error { border: 1px solid #d29922; border-left-width: 4px; background: #fff8c5; color: #633c01; padding: .7em 1em; margin: 1em 0 .4em; break-inside: avoid; break-after: avoid-page; overflow-wrap: anywhere; }
+.markdown-body .md2pdf-mermaid-error p { margin: .25em 0 0; white-space: pre-wrap; }
+.markdown-body pre.md2pdf-mermaid-source { break-inside: auto; }

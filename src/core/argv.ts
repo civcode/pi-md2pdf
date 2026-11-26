@@ -1,4 +1,4 @@
-import { DEFAULTS, type ConversionOptions } from "./options.js";
+import { DEFAULTS, parseMermaidErrorMode, type ConversionOptions } from "./options.js";
 export interface ParsedArguments { options: ConversionOptions; check?: boolean; help?: boolean; version?: boolean }
 export function tokenizeCommand(input: string): string[] {
   const args: string[] = []; let part = ""; let quote: "'" | '"' | null = null; let active = false;
@@ -32,7 +32,7 @@ export function parseArgs(argv: string[], allowPositionalOutput = false, allowSh
     if (flag === "--number-sections") { options.numberSections = true; continue; }
     if (flag === "--force") { options.overwrite = true; continue; }
     if (flag === "-o" && !allowShortOutput) throw new Error("Unknown option: -o (use --output or a positional PDF filename)");
-    if (["-o", "--output", "--paper", "--browser-path"].includes(flag)) {
+    if (["-o", "--output", "--paper", "--browser-path", "--mermaid-errors"].includes(flag)) {
       const next = argv[++i];
       if (!next) throw new Error("Missing value for " + flag);
       if (flag === "-o" || flag === "--output") options.output = next;
@@ -41,6 +41,7 @@ export function parseArgs(argv: string[], allowPositionalOutput = false, allowSh
         options.paper = next.toLowerCase() as "a4" | "letter";
       }
       if (flag === "--browser-path") options.browserPath = next;
+      if (flag === "--mermaid-errors") options.mermaidErrors = parseMermaidErrorMode(next);
       continue;
     }
     if (flag.startsWith("-")) throw new Error("Unknown option: " + flag);
@@ -62,6 +63,8 @@ Options:
       --toc              Add linked table of contents (default: ${DEFAULTS.toc})
       --number-sections  Add heading numbering (default: ${DEFAULTS.numberSections})
       --paper a4|letter  Page format (default: ${DEFAULTS.paper})
+      --mermaid-errors strict|placeholder|source
+                         Failed diagram policy (default: ${DEFAULTS.mermaidErrors})
       --browser-path PATH  Chrome, Chromium or Edge executable
       --force            Overwrite output (default: ${DEFAULTS.overwrite})
       --check            Test headless browser PDF rendering
@@ -80,6 +83,8 @@ Options:
       --toc              Add linked table of contents (default: ${DEFAULTS.toc})
       --number-sections  Add heading numbering (default: ${DEFAULTS.numberSections})
       --paper a4|letter  Page format (default: ${DEFAULTS.paper})
+      --mermaid-errors strict|placeholder|source
+                         Failed diagram policy (default: ${DEFAULTS.mermaidErrors})
       --browser-path PATH  Chrome, Chromium or Edge executable
       --force            Confirm/authorize overwrite of explicit output
       --help             Show Pi slash-command help

@@ -21,6 +21,20 @@ const HTML = "<!doctype html><html><head><meta charset=\"utf-8\">" +
 
 export const MERMAID_LIMITS = { diagrams: 50, source: 50_000, svg: 5 * 1024 * 1024, total: 30 * 1024 * 1024 } as const;
 
+/** Only document-local diagram failures may be handled by fallback modes. */
+export class MermaidDiagramError extends Error {
+  constructor(message: string, options?: ErrorOptions) {
+    super(message, options);
+    this.name = "MermaidDiagramError";
+  }
+}
+export interface MermaidDiagnostic { line: number; message: string }
+export function formatMermaidDiagnostics(diagnostics: readonly MermaidDiagnostic[]): string {
+  if (!diagnostics.length) return "";
+  return "Mermaid: " + diagnostics.length + " failed diagram(s); source preserved.\n" +
+    diagnostics.map(d => "Line " + d.line + ": " + d.message).join("\n");
+}
+
 type Metadata = Record<string, unknown>;
 
 function record(value: unknown, field: string): Metadata {
@@ -65,6 +79,14 @@ function safeConfig(input: Metadata, prefix = ""): Metadata {
       out[key] = safeConfig(record(value, field), field + ".");
     } else if (allowed && typeof value === "string" && allowed.includes(value)) {
       out[key] = value;
+    } else if (field === "htmlLabels" || field === "flowchart.htmlLabels") {
+      if (value !== false) throw new Error(field + ": only false is supported; md2pdf requires native SVG text labels");
+      // Already enforced by the renderer; no document override is needed.
+    } else if (field === "handDrawnSeed") {
+      if (typeof value !== "number" || !Number.isInteger(value) || value < 0 || value > 2147483647) {
+        throw new Error("handDrawnSeed must be an integer between 0 and 2147483647");
+      }
+      out[key] = value;
     } else if (numeric.has(field) && typeof value === "number" &&
                Number.isFinite(value) && value >= 0 && value <= 1000) {
       out[key] = value;
@@ -85,9 +107,8 @@ function safeConfig(input: Metadata, prefix = ""): Metadata {
 
 // Accept ordinary diagram metadata, but pass only canonical, allowlisted
 // configuration to Mermaid. Never forward the original YAML/directives.
-export function normalizeMermaidSource(source: string): string {
+function normalizeDiagramMetadata(source: string): string {
   if (!source.trim()) throw new Error("Empty Mermaid diagram");
-  if (source.length > MERMAID_LIMITS.source) throw new Error("Mermaid diagram exceeds source limit");
   let body = source.replace(/\r\n?/g, "\n");
   const metadata: Metadata = {};
   const config: Metadata = {};
@@ -128,6 +149,18 @@ export function normalizeMermaidSource(source: string): string {
   return "---\n" + JSON.stringify(metadata) + "\n---\n" + body;
 }
 
+export function normalizeMermaidSource(source: string): string {
+  if (source.length > MERMAID_LIMITS.source) throw new Error("Mermaid diagram exceeds source limit");
+  let normalized: string;
+  try {
+    normalized = normalizeDiagramMetadata(source);
+  } catch (error) {
+    throw new MermaidDiagramError(error instanceof Error ? error.message : String(error), { cause: error });
+  }
+  if (normalized.length > MERMAID_LIMITS.source) throw new Error("Normalized Mermaid diagram exceeds source limit");
+  return normalized;
+}
+
 export function validateMermaidSource(source: string): void {
   normalizeMermaidSource(source);
 }
@@ -145,7 +178,7 @@ export function localMermaidModule(url: string): string | undefined {
   return relative;
 }
 
-async function intercept(request: HTTPRequest, dist: string): Promise<void> {
+async function intercept(request: HTTPRequest, dist: string, onModuleFailure: (error: unknown) => void): Promise<void> {
   try {
     if (request.method() === "GET" && request.url() === ORIGIN + "/" && request.isNavigationRequest()) {
       await request.respond({ status: 200, contentType: "text/html; charset=utf-8", body: HTML });
@@ -163,7 +196,7 @@ async function intercept(request: HTTPRequest, dist: string): Promise<void> {
       await request.respond({ status: 200, contentType: "text/javascript; charset=utf-8", body });
       return;
     }
-  } catch { /* missing local asset or closed page: fail closed */ }
+  } catch (error) { onModuleFailure(error); /* fail closed */ }
   if (!request.isInterceptResolutionHandled()) await request.abort("blockedbyclient").catch(() => {});
 }
 
@@ -179,20 +212,30 @@ export async function createMermaidRenderer(browser: Browser, timeout: number): 
     const page: Page = await context.newPage();
     await page.setJavaScriptEnabled(true);
     await page.setRequestInterception(true);
-    page.on("request", request => { void intercept(request, dist).catch(() => {}); });
+    let moduleFailure: Error | undefined;
+    const failModule = (error: unknown) => {
+      moduleFailure ??= new Error("Local Mermaid browser module loading failed", { cause: error });
+    };
+    page.on("request", request => { void intercept(request, dist, failModule).catch(failModule); });
+    page.on("requestfailed", request => {
+      if (request.resourceType() === "script" && request.url().startsWith(ORIGIN + "/")) {
+        failModule(new Error("Failed to load " + request.url()));
+      }
+    });
     page.setDefaultTimeout(timeout);
     await page.goto(ORIGIN + "/", { waitUntil: "load", timeout });
     // The load event waits for the non-async module script. Fail clearly if
     // an installed Mermaid module or one of its static imports did not load.
     const ready = await page.evaluate(() =>
       typeof (globalThis as MermaidGlobal).__md2pdfMermaid?.render === "function");
+    if (moduleFailure) throw moduleFailure;
     if (!ready) throw new Error("Failed to load the local Mermaid browser module");
     let count = 0;
     return {
       async render(source) {
         const normalized = normalizeMermaidSource(source);
         const id = "md2pdf-diagram-" + ++count;
-        const svg = await page.evaluate(async (definition, diagramId) => {
+        const outcome = await page.evaluate(async (definition, diagramId) => {
           // The browser loaded the trusted module via its own module loader.
           // Diagram text remains data, never executable JavaScript.
           const mermaid = (globalThis as MermaidGlobal).__md2pdfMermaid;
@@ -204,47 +247,63 @@ export async function createMermaidRenderer(browser: Browser, timeout: number): 
             secure: ["secure", "securityLevel", "startOnLoad", "maxTextSize",
               "maxEdges", "suppressErrorRendering", "htmlLabels", "arrowMarkerAbsolute", "themeCSS", "fontFamily", "altFontFamily"],
           });
-          const { svg: result } = await mermaid.render(diagramId, definition);
-          // Never execute the returned bindFunctions or insert the diagram
-          // in the final document as active markup.
-          const doc = new DOMParser().parseFromString(result, "image/svg+xml");
-          const root = doc.documentElement;
-          if (doc.doctype || root.localName !== "svg" ||
-              root.namespaceURI !== "http://www.w3.org/2000/svg" ||
-              doc.querySelector("parsererror")) throw new Error("Invalid Mermaid SVG");
-          const blocked = new Set(["script", "foreignobject", "iframe", "object",
-            "embed", "audio", "video", "animate", "animatemotion", "animatetransform", "set"]);
-          const checkCss = (value: string) => {
-            if (/@import\b/i.test(value)) throw new Error("External SVG stylesheet is not supported");
-            for (const match of value.matchAll(/url\s*\(\s*([^)]*)\)/gi)) {
-              const target = match[1]!.trim().replace(/^(['"])(.*)\1$/, "$2");
-              if (!/^#[\w:.-]+$/.test(target)) throw new Error("External SVG resource is not supported");
-            }
-          };
-          for (const element of Array.from(root.querySelectorAll("*")).concat(root)) {
-            if (element.namespaceURI !== "http://www.w3.org/2000/svg" ||
-                blocked.has(element.localName.toLowerCase())) throw new Error("Unsafe or unsupported SVG element");
-            for (const attr of Array.from(element.attributes)) {
-              const name = attr.localName.toLowerCase();
-              if (name.startsWith("on")) throw new Error("SVG event handlers are not supported");
-              if (name === "href" || name === "src") {
-                if (!/^#[\w:.-]+$/.test(attr.value)) throw new Error("External SVG references are not supported");
+          try {
+            const { svg: result } = await mermaid.render(diagramId, definition);
+            // Never execute the returned bindFunctions or insert the diagram
+            // in the final document as active markup.
+            const doc = new DOMParser().parseFromString(result, "image/svg+xml");
+            const root = doc.documentElement;
+            if (doc.doctype || root.localName !== "svg" ||
+                root.namespaceURI !== "http://www.w3.org/2000/svg" ||
+                doc.querySelector("parsererror")) throw new Error("Invalid Mermaid SVG");
+            const blocked = new Set(["script", "foreignobject", "iframe", "object",
+              "embed", "audio", "video", "animate", "animatemotion", "animatetransform", "set"]);
+            const checkCss = (value: string) => {
+              if (/@import\b/i.test(value)) throw new Error("External SVG stylesheet is not supported");
+              for (const match of value.matchAll(/url\s*\(\s*([^)]*)\)/gi)) {
+                const target = match[1]!.trim().replace(/^(['"])(.*)\1$/, "$2");
+                if (!/^#[\w:.-]+$/.test(target)) throw new Error("External SVG resource is not supported");
               }
-              checkCss(attr.value);
+            };
+            for (const element of Array.from(root.querySelectorAll("*")).concat(root)) {
+              if (element.namespaceURI !== "http://www.w3.org/2000/svg" ||
+                  blocked.has(element.localName.toLowerCase())) throw new Error("Unsafe or unsupported SVG element");
+              for (const attr of Array.from(element.attributes)) {
+                const name = attr.localName.toLowerCase();
+                if (name.startsWith("on")) throw new Error("SVG event handlers are not supported");
+                if (name === "href" || name === "src") {
+                  if (!/^#[\w:.-]+$/.test(attr.value)) throw new Error("External SVG references are not supported");
+                }
+                checkCss(attr.value);
+              }
+              if (element.localName === "style") checkCss(element.textContent ?? "");
             }
-            if (element.localName === "style") checkCss(element.textContent ?? "");
+            const view = (root.getAttribute("viewBox") ?? "").trim().split(/[\s,]+/).map(Number);
+            if (view.length !== 4 || !view.every(Number.isFinite) || view[2]! <= 0 || view[3]! <= 0) {
+              throw new Error("Mermaid SVG has invalid dimensions");
+            }
+            root.setAttribute("width", String(view[2]));
+            root.setAttribute("height", String(view[3]));
+            root.removeAttribute("style");
+            return { ok: true as const, svg: new XMLSerializer().serializeToString(root) };
+          } catch (error) {
+            // Browser-local diagram failures are returned as data. Protocol
+            // errors, a closed page or failure of evaluate itself still reject.
+            return { ok: false as const, message: error instanceof Error ? error.message :
+              typeof error === "object" && error !== null && "str" in error ? String(error.str) : String(error) };
+          } finally {
+            document.body.replaceChildren();
           }
-          const view = (root.getAttribute("viewBox") ?? "").trim().split(/[\s,]+/).map(Number);
-          if (view.length !== 4 || !view.every(Number.isFinite) || view[2]! <= 0 || view[3]! <= 0) {
-            throw new Error("Mermaid SVG has invalid dimensions");
-          }
-          root.setAttribute("width", String(view[2]));
-          root.setAttribute("height", String(view[3]));
-          root.removeAttribute("style");
-          return new XMLSerializer().serializeToString(root);
         }, normalized, id);
-        if (Buffer.byteLength(svg, "utf8") > MERMAID_LIMITS.svg) throw new Error("Mermaid SVG exceeds size limit");
-        return svg;
+        if (moduleFailure) throw moduleFailure;
+        if (!outcome.ok) {
+          if (/edge limit exceeded|maximum text size|failed to fetch dynamically imported module|error loading dynamically imported module|importing a module script failed/i.test(outcome.message)) {
+            throw new Error(outcome.message);
+          }
+          throw new MermaidDiagramError(outcome.message);
+        }
+        if (Buffer.byteLength(outcome.svg, "utf8") > MERMAID_LIMITS.svg) throw new Error("Mermaid SVG exceeds size limit");
+        return outcome.svg;
       },
       close: () => context.close(),
     };

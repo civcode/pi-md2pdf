@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { parseArgs, HELP } from "./core/argv.js";
 import { convertMarkdownToPdf, checkBrowser } from "./core/convert.js";
+import { formatMermaidDiagnostics } from "./core/mermaid.js";
 
 export async function main(argv: string[] = process.argv.slice(2)): Promise<number> {
   try {
@@ -15,6 +16,7 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
     }
     const result = await convertMarkdownToPdf(parsed.options);
     console.log("Created " + result.output + " (" + result.bytes + " bytes)");
+    if (result.mermaidDiagnostics.length) console.error(formatMermaidDiagnostics(result.mermaidDiagnostics));
     return 0;
   } catch (err) {
     console.error("md2pdf: " + (err instanceof Error ? err.message : String(err)));

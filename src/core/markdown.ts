@@ -3,13 +3,15 @@ import hljs from "highlight.js";
 import Token from "markdown-it/lib/token.mjs";
 import { inlineLocalImages } from "./assets.js";
 import { enableMath, renderMath } from "./math.js";
-import { MERMAID_LIMITS, validateMermaidSource } from "./mermaid.js";
+import { MERMAID_LIMITS, validateMermaidSource, MermaidDiagramError, type MermaidDiagnostic } from "./mermaid.js";
+import { DEFAULTS, parseMermaidErrorMode, type MermaidErrorMode } from "./options.js";
 
 export interface RenderOptions {
   toc: boolean; numberSections: boolean;
   renderMermaid?: (source: string) => Promise<string>;
+  mermaidErrors?: MermaidErrorMode;
 }
-export interface RenderResult { html: string; headings: { level: number; title: string; id: string }[] }
+export interface RenderResult { html: string; headings: { level: number; title: string; id: string }[]; mermaidDiagnostics: MermaidDiagnostic[] }
 
 function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
@@ -31,6 +33,15 @@ enableMath(md);
 md.renderer.rules.mermaid_image = (tokens, index) =>
   '<figure class="md2pdf-mermaid"><img alt="Mermaid diagram" src="' +
   escapeHtml(tokens[index]!.content) + '"></figure>\n';
+md.renderer.rules.mermaid_source = (tokens, index) =>
+  '<pre class="md2pdf-mermaid-source"><code>' + escapeHtml(tokens[index]!.content) + '</code></pre>\n';
+md.renderer.rules.mermaid_failure = (tokens, index) => {
+  const token = tokens[index]!;
+  const diagnostic = token.meta as MermaidDiagnostic;
+  return '<aside class="md2pdf-mermaid-error" role="note"><strong>Mermaid rendering failed (line ' +
+    diagnostic.line + ')</strong><p>' + escapeHtml(diagnostic.message) +
+    '</p></aside>\n<pre class="md2pdf-mermaid-source"><code>' + escapeHtml(token.content) + '</code></pre>\n';
+};
 export async function renderMarkdown(source: string, input: string, opts: RenderOptions): Promise<RenderResult> {
   const env = {};
   const tokens = md.parse(source, env);
@@ -86,6 +97,8 @@ export async function renderMarkdown(source: string, input: string, opts: Render
   const diagrams = tokens.filter(t => t.type === "fence" && t.info.trim() === "mermaid");
   if (diagrams.length > MERMAID_LIMITS.diagrams) throw new Error("Too many Mermaid diagrams (maximum 50)");
   let diagramBytes = 0;
+  const mermaidDiagnostics: MermaidDiagnostic[] = [];
+  const mode = parseMermaidErrorMode(opts.mermaidErrors ?? DEFAULTS.mermaidErrors);
   for (const token of diagrams) {
     const line = (token.map?.[0] ?? 0) + 1;
     try {
@@ -99,8 +112,16 @@ export async function renderMarkdown(source: string, input: string, opts: Render
       token.type = "mermaid_image";
       token.content = "data:image/svg+xml;base64," + bytes.toString("base64");
     } catch (error) {
-      throw new Error("Mermaid diagram at line " + line + ": " +
-        (error instanceof Error ? error.message : String(error)), { cause: error });
+      // Only explicitly typed, document-local errors qualify for fallback.
+      const message = error instanceof Error ? error.message : String(error);
+      if (!(error instanceof MermaidDiagramError) || mode === "strict") {
+        throw new Error("Mermaid diagram at line " + line + ": " + message, { cause: error });
+      }
+      const diagnostic = { line, message };
+      mermaidDiagnostics.push(diagnostic);
+      token.type = mode === "placeholder" ? "mermaid_failure" : "mermaid_source";
+      token.meta = diagnostic;
+      // Original source remains intact and is escaped by the fallback renderer.
     }
   }
   const body = md.renderer.render(tokens, md.options, env);
@@ -108,5 +129,5 @@ export async function renderMarkdown(source: string, input: string, opts: Render
     ? '<nav class="md2pdf-toc" aria-label="Table of contents"><h2>Table of contents</h2><ul>' +
       headings.map(h => '<li class="toc-level-' + h.level + '"><a href="#' + encodeURIComponent(h.id) + '">' + (tocTitles.get(h.id) ?? escapeHtml(h.title)) + "</a></li>").join("") + "</ul></nav>"
     : "";
-  return { html: toc + body, headings };
+  return { html: toc + body, headings, mermaidDiagnostics };
 }
