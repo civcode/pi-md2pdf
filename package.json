@@ -40,7 +40,9 @@
     "README.md",
     "CHANGELOG.md",
     "THIRD_PARTY_NOTICES.md",
-    "LICENSE"
+    "LICENSE",
+    "docs/LATEX.md",
+    "docs/MERMAID.md"
   ],
   "scripts": {
     "build": "tsup src/cli.ts src/extension.ts --format esm --target node22 --out-dir dist --clean",

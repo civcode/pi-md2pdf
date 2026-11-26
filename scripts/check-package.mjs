@@ -57,7 +57,7 @@ try {
   await stat(cli);
   await stat(path.join(packageRoot, "dist", "extension.js"));
   await stat(path.join(packageRoot, "styles", "print.css"));
-  for (const file of ["LICENSE", "CHANGELOG.md", "THIRD_PARTY_NOTICES.md", "README.md"]) {
+  for (const file of ["LICENSE", "CHANGELOG.md", "THIRD_PARTY_NOTICES.md", "README.md", "docs/LATEX.md", "docs/MERMAID.md"]) {
     await stat(path.join(packageRoot, file));
   }
   const manifest = JSON.parse(await readFile(path.join(packageRoot, "package.json"), "utf8"));
