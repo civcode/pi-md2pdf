@@ -1,5 +1,4 @@
-import { readFileSync } from "node:fs";
-import { mkdir, mkdtemp, rename, rm, writeFile } from "node:fs/promises";
+import { readFileSync, mkdirSync, mkdtempSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { DEFAULTS, parseMermaidErrorMode, type ConversionOptions, type Paper, type MermaidErrorMode } from "./options.js";
 
@@ -62,19 +61,19 @@ export function loadPdfSettings(agentDir: string): PdfSettings {
   }
 }
 
-/** Save only validated preference fields; replace atomically in the same directory. */
-export async function savePdfSettings(agentDir: string, value: PdfSettings): Promise<void> {
+/** Save tiny validated JSON synchronously and atomically, so a menu change is either saved or rolled back before the next keypress. */
+export function savePdfSettings(agentDir: string, value: PdfSettings): void {
   const settings = normalizePdfSettings(value);
   const file = settingsPath(agentDir);
   const dir = path.dirname(file);
-  await mkdir(dir, { recursive: true, mode: 0o700 });
-  const temp = await mkdtemp(path.join(dir, ".settings-"));
+  mkdirSync(dir, { recursive: true, mode: 0o700 });
+  const temp = mkdtempSync(path.join(dir, ".settings-"));
   try {
     const candidate = path.join(temp, "settings.json");
-    await writeFile(candidate, JSON.stringify(settings, null, 2) + "\n", { mode: 0o600, flag: "wx" });
-    await rename(candidate, file);
+    writeFileSync(candidate, JSON.stringify(settings, null, 2) + "\n", { mode: 0o600, flag: "wx" });
+    renameSync(candidate, file);
   } finally {
-    await rm(temp, { recursive: true, force: true });
+    rmSync(temp, { recursive: true, force: true });
   }
 }
 

@@ -11,7 +11,7 @@ import { resolveWorkspacePaths } from "./core/workspace.js";
 import { getMd2pdfArgumentCompletions } from "./ui/completion.js";
 import { formatMd2pdfCall, formatMd2pdfResult } from "./ui/display.js";
 import { Text } from "@earendil-works/pi-tui";
-import { applyPdfSettings, loadPdfSettings, savePdfSettings, settingsPath } from "./core/settings.js";
+import { applyPdfSettings, loadPdfSettings, savePdfSettings } from "./core/settings.js";
 import { editPdfSettings } from "./ui/settings.js";
 
 async function exists(file: string): Promise<boolean> {
@@ -41,10 +41,7 @@ export default function piMd2Pdf(pi: ExtensionAPI): void {
             return;
           }
           const agentDir = getAgentDir();
-          const edited = await editPdfSettings(ctx, loadPdfSettings(agentDir));
-          if (edited === null) return;
-          await savePdfSettings(agentDir, edited);
-          report("md2pdf settings saved: " + settingsPath(agentDir), "info");
+          await editPdfSettings(ctx, loadPdfSettings(agentDir), settings => savePdfSettings(agentDir, settings));
           return;
         }
         const parsed = parseArgs(tokens, true, false);

@@ -130,7 +130,7 @@ TOC contains clickable heading links, **not printed page numbers**. TOC and numb
 
 ### 3.5 Shared defaults and agent tool guidance
 
-`/md2pdf settings` MUST open a native Pi TUI SettingsList overlay for paper, TOC, numbering, and Mermaid error policy. User edits are staged; Save persists atomically, Escape cancels, and Reset restores factory values in the draft. Persist settings in `<agentDir>/md2pdf/settings.json`, honoring Pi's agent-directory override. Both Pi conversion interfaces MUST use saved preferences for omitted options and explicit arguments take precedence, including false values. Standalone CLI defaults remain unchanged. Non-TUI settings requests MUST report a clear error without modifying files. Persistent settings MUST NOT authorize overwrites, change paths, or relax security restrictions.
+`/md2pdf settings` MUST open a native Pi TUI SettingsList overlay for paper, TOC, numbering, and Mermaid error policy. Each edit is persisted atomically before another change is accepted; Escape closes the compact menu, and Reset restores and persists factory values. On persistence failure, restore the last saved value and show a diagnostic. Persist settings in `<agentDir>/md2pdf/settings.json`, honoring Pi's agent-directory override. Both Pi conversion interfaces MUST use saved preferences for omitted options and explicit arguments take precedence, including false values. Standalone CLI defaults remain unchanged. Non-TUI settings requests MUST report a clear error without modifying files. Persistent settings MUST NOT authorize overwrites, change paths, or relax security restrictions.
 
 All interfaces MUST use the immutable TypeScript defaults in `src/core/options.ts`:
 
