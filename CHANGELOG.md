@@ -28,6 +28,8 @@ First planned public release. **Not yet published to npm or tagged.**
 
 - Isolated local Mermaid rendering of fenced diagrams into static SVG images; final PDF page remains JavaScript-disabled. Mermaid feature branch pending validation.
 
+- Safe Mermaid YAML frontmatter and legacy initialization directives, with allowlisted visual configuration and field-specific errors for unsupported settings.
+
 ### Notes and limitations
 
 - Requires Node.js 22.19+ and an existing compatible headless browser; no browser binary is bundled.

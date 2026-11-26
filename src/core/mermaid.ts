@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import path from "node:path";
+import { parseDocument } from "yaml";
 import type { Browser, BrowserContext, HTTPRequest, Page } from "puppeteer-core";
 
 const require = createRequire(import.meta.url);
@@ -20,13 +21,115 @@ const HTML = "<!doctype html><html><head><meta charset=\"utf-8\">" +
 
 export const MERMAID_LIMITS = { diagrams: 50, source: 50_000, svg: 5 * 1024 * 1024, total: 30 * 1024 * 1024 } as const;
 
-export function validateMermaidSource(source: string): void {
+type Metadata = Record<string, unknown>;
+
+function record(value: unknown, field: string): Metadata {
+  if (!value || typeof value !== "object" || Array.isArray(value) ||
+      Object.getPrototypeOf(value) !== Object.prototype) {
+    throw new Error("Mermaid " + field + " must be a mapping");
+  }
+  return value as Metadata;
+}
+
+function parseMetadata(source: string): Metadata {
+  const doc = parseDocument(source, { schema: "core", strict: true, uniqueKeys: true });
+  if (doc.errors.length) throw new Error("Invalid Mermaid metadata: " + doc.errors[0]!.message);
+  // Do not permit aliases (including cyclic or exponentially expanded YAML).
+  return record(doc.toJS({ maxAliasCount: 0 }) ?? {}, "metadata");
+}
+
+const choices: Record<string, readonly string[]> = {
+  theme: ["default", "base", "neutral", "dark", "forest"],
+  layout: ["dagre", "elk"],
+  look: ["classic", "handDrawn", "neo"],
+  "flowchart.curve": ["basis", "linear", "cardinal", "monotoneX", "step", "stepAfter", "stepBefore", "natural"],
+  "flowchart.defaultRenderer": ["dagre-wrapper", "dagre-d3", "elk"],
+  "gantt.displayMode": ["", "compact"],
+};
+const numeric = new Set(["flowchart.nodeSpacing", "flowchart.rankSpacing", "flowchart.padding",
+  "sequence.actorMargin", "sequence.messageMargin", "sequence.diagramMarginX", "sequence.diagramMarginY",
+  "gantt.barHeight", "gantt.barGap", "gantt.topPadding", "gantt.leftPadding", "gantt.rightPadding"]);
+const boolean = new Set(["flowchart.useMaxWidth", "sequence.useMaxWidth", "sequence.mirrorActors",
+  "sequence.showSequenceNumbers", "gantt.useMaxWidth", "gantt.topAxis", "wrap"]);
+const sections = new Set(["flowchart", "sequence", "gantt", "themeVariables"]);
+
+function safeConfig(input: Metadata, prefix = ""): Metadata {
+  const out: Metadata = {};
+  for (const [key, value] of Object.entries(input)) {
+    const field = prefix + key;
+    if (key === "__proto__" || key === "constructor" || key === "prototype") {
+      throw new Error("Unsupported Mermaid configuration: " + field);
+    }
+    const allowed = Object.hasOwn(choices, field) ? choices[field] : undefined;
+    if (!prefix && sections.has(key)) {
+      out[key] = safeConfig(record(value, field), field + ".");
+    } else if (allowed && typeof value === "string" && allowed.includes(value)) {
+      out[key] = value;
+    } else if (numeric.has(field) && typeof value === "number" &&
+               Number.isFinite(value) && value >= 0 && value <= 1000) {
+      out[key] = value;
+    } else if (boolean.has(field) && typeof value === "boolean") {
+      out[key] = value;
+    } else if (prefix === "themeVariables." && /^[a-zA-Z][a-zA-Z0-9]{0,63}$/.test(key) &&
+               ((typeof value === "string" && /^[#a-zA-Z0-9 ,.%()-]{1,100}$/.test(value) &&
+                 !/\b(?:url|var|attr|expression)\s*\(/i.test(value)) ||
+                (typeof value === "number" && Number.isFinite(value) && Math.abs(value) <= 1000) ||
+                typeof value === "boolean")) {
+      out[key] = value;
+    } else {
+      throw new Error("Unsupported Mermaid configuration: " + field);
+    }
+  }
+  return out;
+}
+
+// Accept ordinary diagram metadata, but pass only canonical, allowlisted
+// configuration to Mermaid. Never forward the original YAML/directives.
+export function normalizeMermaidSource(source: string): string {
   if (!source.trim()) throw new Error("Empty Mermaid diagram");
   if (source.length > MERMAID_LIMITS.source) throw new Error("Mermaid diagram exceeds source limit");
-  // Do not permit document-controlled configuration, including security or HTML overrides.
-  if (/%%\s*\{/.test(source) || /^\s*---(?:\r?\n|$)/.test(source)) {
-    throw new Error("Mermaid configuration directives and YAML frontmatter are not supported");
+  let body = source.replace(/\r\n?/g, "\n");
+  const metadata: Metadata = {};
+  const config: Metadata = {};
+  const mergeConfig = (value: Metadata) => {
+    for (const [key, next] of Object.entries(safeConfig(value))) {
+      config[key] = sections.has(key)
+        ? { ...(config[key] as Metadata | undefined), ...(next as Metadata) }
+        : next;
+    }
+  };
+  const front = body.match(/^\s*---[ \t]*\n([\s\S]*?)\n[ \t]*---[ \t]*(?:\n|$)/);
+  if (front) {
+    const parsed = parseMetadata(front[1]!);
+    for (const [key, value] of Object.entries(parsed)) {
+      if (key === "config") mergeConfig(record(value, "config"));
+      else if (key === "title" && typeof value === "string" &&
+               value.length <= 500 && !/[<>\r\n]/.test(value)) metadata.title = value;
+      else if (key === "displayMode" && (value === "compact" || value === "")) metadata.displayMode = value;
+      else throw new Error("Unsupported Mermaid frontmatter field: " + key);
+    }
+    body = body.slice(front[0].length);
+  } else if (/^\s*---[ \t]*(?:\n|$)/.test(body)) {
+    throw new Error("Unclosed Mermaid YAML frontmatter");
   }
+  body = body.replace(/%%\s*\{([\s\S]*?)\}\s*%%/g, (_match, directive: string) => {
+    const match = directive.match(/^\s*(?:init|initialize)\s*:\s*([\s\S]+)$/);
+    if (!match) throw new Error("Unsupported Mermaid directive (only init/initialize are supported)");
+    mergeConfig(parseMetadata(match[1]!));
+    return "\n";
+  });
+  if (/%%\s*\{/.test(body) || /^\s*---[ \t]*(?:\n|$)/.test(body)) {
+    throw new Error("Malformed or repeated Mermaid metadata");
+  }
+  if (!body.trim()) throw new Error("Empty Mermaid diagram");
+  if (Object.keys(config).length) metadata.config = config;
+  if (!Object.keys(metadata).length) return body;
+  // JSON is valid YAML; only checked values are serialized into the header.
+  return "---\n" + JSON.stringify(metadata) + "\n---\n" + body;
+}
+
+export function validateMermaidSource(source: string): void {
+  normalizeMermaidSource(source);
 }
 
 // This is a synthetic origin, not a server. Every request is answered from
@@ -87,7 +190,7 @@ export async function createMermaidRenderer(browser: Browser, timeout: number): 
     let count = 0;
     return {
       async render(source) {
-        validateMermaidSource(source);
+        const normalized = normalizeMermaidSource(source);
         const id = "md2pdf-diagram-" + ++count;
         const svg = await page.evaluate(async (definition, diagramId) => {
           // The browser loaded the trusted module via its own module loader.
@@ -99,7 +202,7 @@ export async function createMermaidRenderer(browser: Browser, timeout: number): 
             flowchart: { htmlLabels: false }, theme: "default", arrowMarkerAbsolute: false,
             maxTextSize: 50_000, maxEdges: 500, suppressErrorRendering: true,
             secure: ["secure", "securityLevel", "startOnLoad", "maxTextSize",
-              "maxEdges", "suppressErrorRendering", "htmlLabels", "flowchart", "arrowMarkerAbsolute"],
+              "maxEdges", "suppressErrorRendering", "htmlLabels", "arrowMarkerAbsolute", "themeCSS", "fontFamily", "altFontFamily"],
           });
           const { svg: result } = await mermaid.render(diagramId, definition);
           // Never execute the returned bindFunctions or insert the diagram
@@ -139,7 +242,7 @@ export async function createMermaidRenderer(browser: Browser, timeout: number): 
           root.setAttribute("height", String(view[3]));
           root.removeAttribute("style");
           return new XMLSerializer().serializeToString(root);
-        }, source, id);
+        }, normalized, id);
         if (Buffer.byteLength(svg, "utf8") > MERMAID_LIMITS.svg) throw new Error("Mermaid SVG exceeds size limit");
         return svg;
       },

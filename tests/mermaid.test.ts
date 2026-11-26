@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { renderMarkdown } from "../src/core/markdown.js";
-import { localMermaidModule, validateMermaidSource } from "../src/core/mermaid.js";
+import { localMermaidModule, normalizeMermaidSource, validateMermaidSource } from "../src/core/mermaid.js";
 const opts = { toc: false, numberSections: false };
 const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 40"><text x="0" y="20">Diagram</text></svg>';
 const block = "```mermaid\nflowchart LR\n  A --> B\n```";
@@ -28,6 +28,26 @@ describe("Mermaid Markdown integration", () => {
   it("rejects configuration overrides, empty or oversized source", () => {
     for (const source of ["%%{init: {securityLevel: loose}}%%\nflowchart LR\nA-->B", "---\nconfig:\n  securityLevel: loose\n---\nflowchart LR\nA-->B", "", "x".repeat(50_001)]) {
       expect(() => validateMermaidSource(source)).toThrow();
+    }
+  });
+  it("accepts titles, safe frontmatter and legacy init configuration", () => {
+    const source = "---\ntitle: System architecture\nconfig:\n  theme: neutral\n  flowchart:\n    curve: linear\n---\nflowchart LR\nA-->B";
+    const result = normalizeMermaidSource(source);
+    expect(result).toContain('"title":"System architecture"');
+    expect(result).toContain('"theme":"neutral"');
+    expect(result).toContain('"curve":"linear"');
+    expect(result).toContain("flowchart LR\nA-->B");
+    expect(normalizeMermaidSource("%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#aabbcc'}}}%%\nflowchart LR\nA-->B"))
+      .toContain('"primaryColor":"#aabbcc"');
+  });
+  it("rejects unsafe nested config, unknown keys, CSS, duplicate keys and aliases", () => {
+    for (const value of [
+      "flowchart: {htmlLabels: true}", "securityLevel: loose", "themeCSS: 'body {color:red}'",
+      "themeVariables: {primaryColor: 'url(https://example.com)'}", "secure: []",
+      "theme: default\n  theme: dark", "theme: &x neutral\n  look: *x",
+      "constructor: {prototype: {polluted: true}}",
+    ]) {
+      expect(() => normalizeMermaidSource("---\nconfig:\n  " + value + "\n---\nflowchart LR\nA-->B")).toThrow();
     }
   });
   it("only maps local Mermaid JS modules, never external resources", () => {

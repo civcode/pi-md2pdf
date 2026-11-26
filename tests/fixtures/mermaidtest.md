@@ -76,3 +76,17 @@ pie showData
 flowchart LR
   A --> B
 ```
+
+## Configured diagram
+
+```mermaid
+---
+title: Configured architecture
+config:
+  theme: neutral
+  flowchart:
+    curve: linear
+---
+flowchart LR
+  A[Local modules] --> B[Static SVG]
+```

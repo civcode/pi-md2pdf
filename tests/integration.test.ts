@@ -21,6 +21,11 @@ describe.skipIf(!available)("headless PDF rendering (requires installed Chromium
         expect(svg).not.toMatch(/<script|<foreignObject/i);
         const second = await renderer.render("sequenceDiagram\n  Alice->>Bob: Second diagram");
         expect(second).toContain("Second diagram");
+        const configured = await renderer.render("---\ntitle: Configured flow\nconfig:\n  theme: neutral\n  flowchart:\n    curve: linear\n---\nflowchart LR\nA[Configured start] --> B[Configured end]");
+        expect(configured).toContain("Configured start");
+        expect(configured).not.toMatch(/<script|<foreignObject/i);
+        const legacy = await renderer.render("%%{init: {'theme':'base'}}%%\nflowchart LR\nA[Legacy configuration] --> B");
+        expect(legacy).toContain("Legacy configuration");
         await expect(renderer.render("not a Mermaid diagram")).rejects.toThrow();
       } finally { await renderer.close(); }
     } finally { await browser.close(); }

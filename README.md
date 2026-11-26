@@ -234,7 +234,7 @@ flowchart LR
 
 Mermaid runs in a separate, temporary JavaScript-enabled Chromium context, using only locally installed Mermaid modules. It produces SVG, which is validated and embedded as an inert image. The final PDF page still has JavaScript disabled and blocks network access. The same browser process is reused; no server, second browser installation, browser extension or runtime downloads are needed.
 
-Configuration directives and YAML frontmatter, external images/resources, interactive links, and SVG features requiring active HTML (such as HTML labels) are not supported. Invalid diagrams fail conversion with a source line number. Diagrams are limited to 50 per document and are scaled to fit the printable page. Very large diagrams should be split for legibility.
+YAML frontmatter (`title`, `config`, and compact Gantt `displayMode`) and legacy `init`/`initialize` directives support a limited allowlist: built-in themes, dagre/elk layout selection, basic visual settings, and simple theme variables. Unsupported configuration fields (including security overrides and custom CSS) produce a field-specific error. External images/resources, interactive links, and SVG features requiring active HTML (such as HTML labels) are not supported. Invalid diagrams fail conversion with a source line number. Diagrams are limited to 50 per document and are scaled to fit the printable page. Very large diagrams should be split for legibility.
 
 The Mermaid feature branch requires fresh installation, browser and PDF validation; the LaTeX branch validation does not verify Mermaid.
 
