@@ -52,7 +52,15 @@ Run `/md2pdf settings` in interactive Pi to open the native terminal settings ov
 | Paper format | a4, letter | a4 |
 | Table of contents | false, true | false |
 | Number sections | false, true | false |
-| Mermaid errors | placeholder, source, strict | placeholder |
+| Mermaid errors | `placeholder`, `source`, `strict` | `placeholder` |
+
+**Mermaid error modes** — what happens if a diagram cannot be rendered:
+
+- **`placeholder` (default):** Insert an error message with the source line number and the original Mermaid code as a literal code block. Continue generating the PDF.
+- **`source`:** Insert only the original Mermaid code as a literal code block, without an error message in the PDF. Continue generating the PDF.
+- **`strict`:** Abort conversion at the first diagram error. No new PDF is generated.
+
+Both continuing modes report failed diagram counts and source line numbers in the conversion result. Browser failures, timeouts, cancellation, filesystem errors and resource-limit violations remain fatal in all modes.
 
 Preferences are saved atomically to `<agentDir>/md2pdf/settings.json` (normally `~/.pi/agent/md2pdf/settings.json`, honoring `PI_CODING_AGENT_DIR`). Both the slash command and agent tool read saved preferences for each conversion; no restart is required after saving. The standalone CLI keeps its factory defaults. Explicit arguments override saved settings, including `--no-toc` and `--no-number-sections` or the agent tool's explicit false values. Overwrite consent, output paths and security restrictions are never saved as preferences. The settings menu does not make model calls.
 
