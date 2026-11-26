@@ -1,7 +1,7 @@
 {
   "name": "pi-md2pdf",
   "version": "0.1.0",
-  "description": "Beautiful, local GitHub-style Markdown to PDF exports for Pi and the terminal",
+  "description": "Local Markdown-to-PDF exports for Pi and the terminal, with LaTeX math, Mermaid diagrams and an interactive settings menu.",
   "type": "module",
   "license": "MIT",
   "repository": {
@@ -15,7 +15,13 @@
     "pi",
     "markdown",
     "pdf",
-    "chromium"
+    "chromium",
+    "markdown-to-pdf",
+    "latex",
+    "katex",
+    "mermaid",
+    "offline",
+    "pi-extension"
   ],
   "engines": {
     "node": ">=22.19.0"

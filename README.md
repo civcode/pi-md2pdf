@@ -1,8 +1,8 @@
 # pi-md2pdf
 
-**GitHub-style Markdown → PDF**, for Pi Coding Agent and any terminal. One shared TypeScript renderer, two entry points, and an existing headless Chrome/Chromium/Edge browser. No browser download, GUI or network upload.
+**GitHub-style Markdown → PDF**, for Pi Coding Agent and any terminal. Convert Markdown locally using your installed Chrome, Chromium or Edge browser. Supports KaTeX math, Mermaid diagrams, syntax-highlighted code, tables, local images and an interactive Pi settings menu. No browser download, GUI or network upload.
 
-> **v0.1.0 release candidate — not yet published.** Linux builds, tests, Pi loading, and packed-package PDF rendering have passed; native Windows and macOS remain unverified. See the [release checklist](docs/RELEASE.md), [changelog](CHANGELOG.md), [compatibility matrix](docs/COMPATIBILITY.md), and [specification](docs/SPECIFICATION.md).
+> **v0.1.0 release candidate — npm publication pending.** The latest feature baseline passed Linux CI and interactive Pi conversion was tested by the maintainer. Final release tarball checks and native Windows/macOS validation remain pending. See the [release checklist](https://github.com/civcode/pi-md2pdf/blob/release/v0.1.0/docs/RELEASE.md) and [changelog](CHANGELOG.md).
 
 ## Requirements
 
@@ -12,9 +12,17 @@
 
 Browser selection defaults to **Edge → Chrome → Chromium** on Windows, **Chromium → Chrome → Edge** on Linux, and **Chrome → Edge → Chromium** on macOS. Set `MD2PDF_BROWSER_PATH` to use a custom executable.
 
-## Usage
+## Installation and usage
 
-After public npm publication (not available yet):
+Once the initial version is published to npm, install into Pi:
+
+~~~sh
+pi install npm:pi-md2pdf
+~~~
+
+Restart Pi or run `/reload`, then use `/md2pdf settings` to configure your preferences and `/md2pdf report.md` to export a local Markdown file. To remove the package, run `pi remove npm:pi-md2pdf`.
+
+For standalone terminal usage after publication:
 
 ~~~sh
 npm install -g pi-md2pdf
@@ -22,12 +30,6 @@ md2pdf report.md
 md2pdf report.md -o report-with-toc.pdf --toc --number-sections
 md2pdf report.md --paper letter
 md2pdf --check
-~~~
-
-For Pi after publication:
-
-~~~sh
-pi install npm:pi-md2pdf
 ~~~
 
 In Pi:
@@ -247,7 +249,7 @@ Mermaid runs in a separate, temporary JavaScript-enabled Chromium context, using
 
 YAML frontmatter (`title`, `config`, and compact Gantt `displayMode`) and legacy `init`/`initialize` directives support a limited allowlist: built-in themes, dagre/elk layout selection, basic visual settings, and simple theme variables. Unsupported configuration fields (including security overrides and custom CSS) produce a field-specific error. External images/resources, interactive links, and SVG features requiring active HTML (such as HTML labels) are not supported. An invalid or unsupported diagram is handled according to `--mermaid-errors` (Pi tool parameter `mermaidErrors`): `placeholder` (default) inserts a line-numbered diagnostic **and** the original escaped Mermaid source, then continues; `source` inserts only the escaped source and continues; `strict` aborts conversion. Both continuing modes report failed diagram counts and lines in the CLI/Pi result. Browser, module loading, cancellation, timeout, resource limits and filesystem failures remain fatal. `htmlLabels: false` (including `flowchart.htmlLabels`) is accepted; enabling HTML labels is not supported. Bounded integer `handDrawnSeed` values are accepted. Diagrams are limited to 50 per document and are scaled to fit the printable page. Very large diagrams should be split for legibility.
 
-The Mermaid feature branch requires fresh installation, browser and PDF validation; the LaTeX branch validation does not verify Mermaid.
+Linux integration tests cover Mermaid and LaTeX together. Unsupported diagram cases are reported using the selected error policy; visual acceptance and native Windows/macOS tests remain separate checks.
 
 ## Visual style
 

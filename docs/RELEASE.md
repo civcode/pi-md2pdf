@@ -1,7 +1,7 @@
 # v0.1.0 release checklist
 
-**Status:** Release-candidate preparation only — **not approved for publication**.  
-**Working branch:** `feat/initial-implementation`  
+**Status:** First public release preparation requested; final checks and authenticated publication pending.  
+**Working branch:** `release/v0.1.0`  
 **Target:** One npm package, `pi-md2pdf@0.1.0`, exposing a standalone
 `md2pdf` executable and Pi's `/md2pdf` command / `markdown_to_pdf` tool.
 
@@ -52,6 +52,9 @@ npm audit --omit=dev
 ```
 
 - [x] Previous Linux source/build suite passed: **40/40 tests**.
+- [x] Linux feature baseline `b807338` passed [GitHub validation](https://github.com/civcode/pi-md2pdf/actions/runs/45823870297), including Mermaid and LaTeX tests and the fixed settings overlay.
+- [x] Maintainer reported three successful Pi fixture exports with expected Mermaid warnings and confirmed the settings menu visually.
+- [ ] Run the final release tarball checks with strict Mermaid rendering on the chosen release commit.
 - [x] Previous Linux Pi loader check and isolated npm install/CLI PDF render passed.
 - [x] Previous production audit reported **0 vulnerabilities**.
 - [ ] Rerun all checks **after the release-candidate manifest and packaging changes**.
@@ -95,10 +98,9 @@ readability. Other long/wide documents may need separate review.
 - [ ] Re-run the full test suite and package checks after the completion/UI
       additions. Previous 40/40 Linux tests predate these changes.
 
-## 4. Approval and publication (DO NOT EXECUTE YET)
+## 4. Final verification and publication
 
-**Stop here until the repository owner explicitly approves merging,
-tagging, GitHub release creation and npm publication.**
+The repository owner requested preparation for public npm and Pi catalog distribution. Final merge, version tag and authenticated publication are separate release actions; do not assume those have completed. Native Windows/macOS coverage remains unverified.
 
 After approval, coordinate these steps in order:
 
@@ -117,7 +119,10 @@ After approval, coordinate these steps in order:
    with `npm install -g pi-md2pdf` and `pi install npm:pi-md2pdf@0.1.0`.
 9. Verify public package gallery discovery after npm indexing. The
    `pi-package` keyword makes a package **eligible**, not guaranteed
-   to appear immediately.
+   to appear immediately. No separate submission is required. Check
+   https://pi.dev/packages/pi-md2pdf and https://www.npmjs.com/package/pi-md2pdf.
+
+For the first publication, use the owner's terminal: `npm login --auth-type=web`, `npm whoami`, `npm view pi-md2pdf version --registry=https://registry.npmjs.org`, then `npm publish --access public --registry=https://registry.npmjs.org` from the reviewed checkout. Complete the interactive npm 2FA challenge. Do not share login tokens or OTPs. Use the npm registry installation to verify the public release; installing an unbuilt git checkout is not equivalent to installing the prepacked npm artifact.
 
 Never store npm tokens, API credentials, or 2FA codes in the repository or
 chat logs. Never dispatch GitHub Actions as a substitute for local validation.
@@ -126,8 +131,7 @@ chat logs. Never dispatch GitHub Actions as a substitute for local validation.
 
 - [ ] Record the final published version and supported browser/platform matrix.
 - [ ] Link the published npm page and Pi package gallery listing in the README.
-- [ ] Keep the first release small; defer Mermaid, math, alternative themes,
-      printed TOC page numbers and GUI preview.
+- [ ] Maintain the existing LaTeX math, Mermaid and Pi settings features; defer alternative themes, printed TOC page numbers and GUI preview.
 - [ ] Revisit the remaining development audit advisory and native Windows/macOS
       compatibility if those checks were deferred.
 

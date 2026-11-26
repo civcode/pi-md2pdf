@@ -63,6 +63,8 @@ try {
   const manifest = JSON.parse(await readFile(path.join(packageRoot, "package.json"), "utf8"));
   const sourceManifest = JSON.parse(await readFile(path.join(project, "package.json"), "utf8"));
   if (manifest.private === true || manifest.version !== sourceManifest.version ||
+      manifest.name !== "pi-md2pdf" || !manifest.keywords?.includes("pi-package") ||
+      manifest.publishConfig?.access !== "public" ||
       manifest.bin?.md2pdf !== "./dist/cli.js" ||
       !manifest.pi?.extensions?.includes("./dist/extension.js")) {
     throw new Error("Packed npm/Pi manifest differs from expected release candidate");
@@ -80,7 +82,9 @@ try {
   const md = path.join(temp, "fixture.md");
   await writeFile(md, "# Package smoke test\n\n| Check | Result |\n|---|---|\n| PDF | OK |\n\n$E=mc^2$\n\n```mermaid\nflowchart LR\n  A[Install] --> B[PDF]\n```\n");
   const output = path.join(temp, "fixture.pdf");
-  process.stdout.write(run(process.execPath, [cli, md, "-o", output], temp));
+  // Strict mode is intentional: a broken Mermaid installation must fail the
+  // package smoke test instead of silently preserving the diagram source.
+  process.stdout.write(run(process.execPath, [cli, md, "-o", output, "--mermaid-errors", "strict"], temp));
   const pdf = await readFile(output);
   if (pdf.subarray(0, 5).toString() !== "%PDF-") throw new Error("Packed CLI output is not a PDF");
   console.log("Package smoke OK: clean npm install, Pi loader, CLI and PDF (" + pdf.byteLength + " bytes)");
