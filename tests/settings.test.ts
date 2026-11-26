@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { visibleWidth } from "@earendil-works/pi-tui";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { applyPdfSettings, defaultPdfSettings, loadPdfSettings, normalizePdfSettings, savePdfSettings, settingsPath } from "../src/core/settings.js";
 import { editPdfSettings, pdfSettingItems, updatePdfSetting } from "../src/ui/settings.js";
@@ -59,6 +60,44 @@ describe("persistent Pi PDF preferences", () => {
       menu.handleInput("\x1b");
     } } } as unknown as ExtensionContext;
     await editPdfSettings(ctx, initial, persist);
+  });
+  it("keeps every overlay row and footer stationary across selections, changes and save errors", async () => {
+    const persist = vi.fn().mockImplementationOnce(() => {
+      throw new Error("A long persistence error that cannot fit on a single status row ".repeat(3));
+    });
+    type Menu = { render: (width: number) => readonly string[]; handleInput: (data: string) => void };
+    const ctx = { ui: { custom: async (factory: (tui: unknown, theme: unknown, kb: unknown, done: () => void) => Menu) => {
+      const menu = factory({ requestRender() {} }, { fg: (_c: string, v: string) => v, bold: (v: string) => v }, {}, () => {});
+      const widths = [44, 56, 80];
+      const check = (width: number) => {
+        const rows = menu.render(width);
+        expect(rows).toHaveLength(17);
+        expect(rows.every(row => visibleWidth(row) === width)).toBe(true);
+        expect(rows[0]).toMatch(/^╭─+╮$/);
+        expect(rows[14]).toContain("Esc to close");
+        expect(rows[16]).toMatch(/^╰─+╯$/);
+        return rows;
+      };
+      for (const width of widths) check(width);
+      menu.handleInput("\r"); // save fails: still exactly the same dimensions
+      for (const width of widths) expect(check(width)[15]).toContain("Save failed:");
+      menu.handleInput("\r"); // successful retry clears the reserved status row
+      for (const width of widths) expect(check(width)[15]).toMatch(/^│\s+│$/);
+      for (const item of pdfSettingItems(defaultPdfSettings())) {
+        for (const width of widths) {
+          const rows = check(width);
+          expect(rows.slice(4, 9).find(row => row.includes("→"))).toContain(item.label);
+          const description = rows.slice(10, 13).map(row => row.slice(1, -1).trim()).join(" ").replace(/\s+/g, " ").trim();
+          expect(description).toBe(item.description);
+        }
+        menu.handleInput("\r");
+        for (const width of widths) check(width);
+        menu.handleInput("\x1b[B");
+      }
+      for (const width of widths) expect(check(width)[4]).toContain("→");
+      menu.handleInput("\x1b");
+    } } } as unknown as ExtensionContext;
+    await editPdfSettings(ctx, defaultPdfSettings(), persist);
   });
   it("saves on change through the real settings menu and applies preferences to both Pi interfaces", async () => {
     const dir = await mkdtemp(path.join(os.tmpdir(), "md2pdf-settings-ui-"));

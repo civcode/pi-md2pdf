@@ -43,7 +43,7 @@ Pi also exposes the `markdown_to_pdf` tool for agent-driven conversions. The sla
 
 ### Pi settings menu
 
-Run `/md2pdf settings` in interactive Pi to open the native terminal settings overlay. Use the arrow keys to select a setting and Enter or Space to cycle its value. Each change is saved automatically. **Reset to defaults** restores and saves factory values; Escape closes the menu without undoing changes.
+Run `/md2pdf settings` in interactive Pi to open the native terminal settings overlay. Use the arrow keys to select a setting and Enter or Space to cycle its value. Each change is saved automatically. The centered 56-column overlay reserves three description rows and one error row, keeping its height and footer stationary as you navigate. **Reset to defaults** restores and saves factory values; Escape closes the menu without undoing changes.
 
 | Setting | Choices | Factory default |
 |---|---|---|

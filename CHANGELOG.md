@@ -34,6 +34,8 @@ First planned public release. **Not yet published to npm or tagged.**
 
 - Native `/md2pdf settings` menu with persistent Pi preferences for paper, TOC, heading numbering and Mermaid error policy; save-on-change, reset and per-conversion negative flags.
 
+- Fixed-height Pi settings overlay with reserved description and error rows to prevent movement when navigating or saving.
+
 ### Notes and limitations
 
 - Requires Node.js 22.19+ and an existing compatible headless browser; no browser binary is bundled.

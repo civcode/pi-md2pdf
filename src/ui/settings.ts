@@ -22,15 +22,35 @@ export function updatePdfSetting(settings: PdfSettings, id: string, value: strin
   return settings;
 }
 
-/** Compact fixed-width overlay; persist each change before accepting another. */
+const DESCRIPTION_ROWS = 3;
+
+/**
+ * SettingsList renders all item rows, a blank line, the selected description
+ * (wrapped by Pi), then a blank line and the keyboard hint. This menu has no
+ * search, submenus or scrolling; keep the native rows/hint and reserve a fixed
+ * description area. A future longer description may be clipped on a narrow
+ * terminal, but must never move the footer or the centered overlay.
+ */
+function fixedSettingsRows(lines: readonly string[], count: number, width: number): string[] {
+  const description = lines.slice(count + 1, -2);
+  const rows = description.slice(0, DESCRIPTION_ROWS);
+  while (rows.length < DESCRIPTION_ROWS) rows.push("");
+  if (description.length > DESCRIPTION_ROWS) {
+    rows[DESCRIPTION_ROWS - 1] = truncateToWidth(rows[DESCRIPTION_ROWS - 1]!, Math.max(0, width - 1), "") + "…";
+  }
+  return [...lines.slice(0, count), "", ...rows, "", lines.at(-1) ?? ""];
+}
+
+/** Compact fixed-size overlay; persist each change before accepting another. */
 export async function editPdfSettings(
   ctx: ExtensionContext, initial: PdfSettings, persist: (settings: PdfSettings) => void,
 ): Promise<void> {
   await ctx.ui.custom<void>((tui, theme, _kb, done) => {
     let current = { ...initial };
     let status = "";
+    const items = pdfSettingItems(current);
     const list = new SettingsList(
-      pdfSettingItems(current), 5,
+      items, items.length,
       {
         label: (text, selected) => selected ? theme.fg("accent", text) : text,
         value: (text, selected) => theme.fg(selected ? "accent" : "muted", text),
@@ -65,8 +85,9 @@ export async function editPdfSettings(
           line(theme.fg("accent", theme.bold("md2pdf settings"))),
           line(theme.fg("muted", "Changes saved automatically")),
           line(""),
-          ...list.render(inner).map(line),
-          ...(status ? [line(theme.fg("error", status))] : []),
+          ...fixedSettingsRows(list.render(inner), items.length, inner).map(line),
+          // Keep the error row present even when there is no error.
+          line(status ? theme.fg("error", status) : ""),
           border("╰" + "─".repeat(width - 2) + "╯"),
         ];
       },
