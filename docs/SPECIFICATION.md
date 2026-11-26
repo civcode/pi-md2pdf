@@ -27,7 +27,7 @@ The visual target is the *GitHub Light / Chrome Markdown Viewer* appearance: rea
 
 ### Explicitly out of scope for v1
 
-Mermaid rendering, LaTeX/KaTeX math, remote images, custom themes/templates, custom fonts, HTML/JavaScript execution from Markdown, GUI/live preview, interactive settings wizard, batch mode, image-to-PDF, PDF merging/splitting, printed TOC page numbers, and a WSL-to-Windows browser bridge. They can be evaluated after v1.
+Interactive Mermaid diagrams, full LaTeX document compilation (including arbitrary packages and TikZ), remote images, custom themes/templates, custom fonts, arbitrary HTML/JavaScript execution from Markdown, GUI/live preview, batch mode, image-to-PDF, PDF merging/splitting, printed TOC page numbers, and a WSL-to-Windows browser bridge. They can be evaluated after v1.
 
 ## 3. Entry points and user experience
 
@@ -47,6 +47,16 @@ Mermaid rendering, LaTeX/KaTeX math, remote images, custom themes/templates, cus
 - In interactive Pi sessions only, may request confirmation before replacing a PDF. In non-interactive modes, existing outputs are rejected rather than overwritten.
 - Parses quoted paths/filenames with spaces without passing input through a shell.
 
+#### Interactive command completion
+
+`/md2pdf` provides Pi-native `getArgumentCompletions`:
+- Suggest `.md` and `.markdown` files and directories from the active session working directory.
+- Support partial and quoted paths, spaces in filenames and nested paths.
+- Suggest supported flags with short descriptions and the values `a4` / `letter` after `--paper`.
+- Preserve already typed command arguments; never offer an exact completed option/token so Enter can submit it.
+- Do not search outside the working directory or follow symlinked directories in completion.
+- Do not require a separate skill, persistent UI, or additional PDF runtime.
+
 ### 3.2 Agent-callable tool
 
 Register `markdown_to_pdf` with a structured input containing:
@@ -58,9 +68,28 @@ Register `markdown_to_pdf` with a structured input containing:
 | `paper` | `a4` / `letter` | `a4` | Paper size |
 | `toc` | boolean | `false` | Linked table of contents |
 | `numberSections` | boolean | `false` | Number headings |
+| `mermaidErrors` | strict / placeholder / source | `placeholder` | Failed diagram policy |
 | `overwrite` | boolean | `false` | Explicit opt-in to replace output |
 
 The tool returns the final PDF path and concise success/error information. It does not ask interactive questions; the calling agent must obtain permission before opting into an overwrite. Tool execution supports cancellation where Pi provides an abort signal.
+
+#### Agent-tool input path policy
+
+The `markdown_to_pdf` **agent tool** must resolve input names against
+`ctx.cwd`, without searching parents, a home folder, or other repositories.
+A basename refers only to the file in that working directory. If missing,
+return a useful "not found here" message rather than discovering a different
+same-named file.
+
+For safety, its input and output paths must stay under the current working
+directory, including after resolving symlinks. Absolute paths are accepted
+only when inside that directory. The tool refuses external paths rather than
+silently using them, even if supplied by the model. The tool description
+instructs Pi not to run broad filesystem searches for a basename.
+
+The direct, user-entered `/md2pdf` slash command and the standalone CLI are
+intentionally not subject to that restriction: explicit absolute paths are
+supported for deliberate cross-directory conversions.
 
 ### 3.3 Standalone CLI
 
@@ -88,16 +117,54 @@ md2pdf --version
 | --- | --- |
 | Theme | GitHub Light |
 | Page size | A4 |
-| Margins | 15 mm on each side |
-| Output | Input basename with `.pdf` beside source file |
+| Margins | 10 mm on each side |
+| Output | First free input.pdf, input-2.pdf, input-3.pdf, ... beside source |
 | TOC | Disabled |
 | Automatic heading numbering | Disabled |
 | Print backgrounds | Enabled |
 | Browser mode | Headless only |
-| Existing destination | Reject / request confirmation in interactive Pi |
+| Existing destination | Implicit name: auto-increment; explicit name: reject or request confirmation in interactive Pi |
 | Remote resources | Disabled |
 
 TOC contains clickable heading links, **not printed page numbers**. TOC and numbering work independently. Heading anchors remain deterministic, including for duplicate headings.
+
+### 3.5 Shared defaults and agent tool guidance
+
+`/md2pdf settings` MUST open a native Pi TUI SettingsList overlay for paper, TOC, numbering, and Mermaid error policy. Each edit is persisted atomically before another change is accepted; Escape closes the compact menu, and Reset restores and persists factory values. On persistence failure, restore the last saved value and show a diagnostic. The centered 56-column menu MUST reserve three description rows and one error row, keeping its height and footer stationary during navigation and edits; only terminal resizing may change the available viewport. Persist settings in `<agentDir>/md2pdf/settings.json`, honoring Pi's agent-directory override. Both Pi conversion interfaces MUST use saved preferences for omitted options and explicit arguments take precedence, including false values. Standalone CLI defaults remain unchanged. Non-TUI settings requests MUST report a clear error without modifying files. Persistent settings MUST NOT authorize overwrites, change paths, or relax security restrictions.
+
+All interfaces MUST use the immutable TypeScript defaults in `src/core/options.ts`:
+
+~~~typescript
+export const DEFAULTS = {
+  paper: "a4",
+  toc: false,
+  numberSections: false,
+  mermaidErrors: "placeholder",
+  overwrite: false,
+  outputConflict: "increment",
+  theme: "github-light",
+} as const;
+~~~
+
+The core options normalizer applies these factory defaults to omitted values, after Pi applies user-saved preferences.
+When a caller omits the output filename and the derived .pdf exists, the
+converter MUST atomically select `-2`, `-3`, etc. without a confirmation.
+Explicit output path collisions MUST fail unless overwrite is authorized;
+interactive Pi MAY ask confirmation for an explicitly supplied destination.
+Concurrent conversions MUST reserve distinct filenames. Overwrite remains false
+by default. CLI help,
+Pi command description, and agent-tool parameter descriptions MUST reflect the
+same values rather than repeating independent literal defaults.
+
+The Pi agent-tool description MUST instruct the model to preserve original
+heading structure and appearance when asked to convert Markdown as-is. It MUST
+explain that TOC and additional numbering are off at factory defaults, and saved user preferences apply unless explicitly overridden.
+The `overwrite` parameter requires explicit user authorization. Tool descriptions
+guide the model but cannot guarantee its choice; final option normalization and
+overwrite safeguards remain enforced by code.
+
+GitHub Light is the sole v1 theme (not a configurable CLI/agent flag). No Pi
+skill is needed or bundled.
 
 ## 4. Conversion pipeline
 
@@ -125,8 +192,12 @@ Render a self-contained HTML document via the browser API, not a local HTTP serv
 
 **Required:** headings H1–H6, paragraphs, inline emphasis, ordered/unordered lists, links, blockquotes, thematic rules, fenced code, syntax highlighting, inline code, GitHub-style pipe tables, local images (PNG/JPEG/WebP), Unicode, and German diacritics.
 
+**Math (feature branch):** Render the KaTeX math-mode subset locally in Node.js. Support inline dollar and bracket delimiters, display double-dollar and bracket delimiters on their own lines, and bare `math`/`latex` fences; `tex` fences preserve source. Embed CSS and math fonts as data URLs, disable trust in KaTeX, and retain the existing browser JavaScript/network restrictions. Report invalid expressions as conversion errors. Full LaTeX documents are not supported.
+
+**Mermaid (feature branch):** Render fenced `mermaid` diagrams with the installed Mermaid JavaScript module in a separate temporary browser context, using the same Chromium process as PDF generation. Intercept every request; only synthetic local module responses are permitted. Use strict security mode, allowlist safe visual configuration in YAML frontmatter and legacy init/initialize directives, prohibit security overrides and external resources, validate static SVG, and embed as an image. Close the context before creating the JavaScript-disabled PDF page. Enforce source, count and output size limits. For document-local diagram failures, `placeholder` (default) emits a line-numbered diagnostic plus escaped original source, `source` emits only escaped source, and `strict` aborts. Continuing modes return structured diagnostics (line and message) to every interface. Infrastructure, cancellation, timeout, filesystem and resource-limit errors remain fatal. Never embed rejected SVG. HTML labels, interactive diagrams, remote images and non-allowlisted configuration overrides are out of scope.
+
 **Required printing behavior:**
-- Thin borders and alternating shading for tables; repeat table headers where the renderer permits.
+- Thin borders, natural/content-dependent table widths and alternating shading for tables; repeat table headers where the renderer permits.
 - Avoid heading orphans and unwanted splits through code blocks and table rows where practical.
 - Wrap long code/table content sensibly; no off-page content in reference fixtures.
 - Preserve print backgrounds so table stripes and code backgrounds appear in the PDF.
@@ -220,4 +291,4 @@ A v1 release candidate must demonstrate:
 
 ## 10. Deferred ideas
 
-Additional themes, Mermaid/KaTeX, linked TOC with printed page numbers, user-defined header/footer, batch conversion, SVG sanitization, optional externally hosted resources with explicit consent, WSL host-browser bridging, improved font embedding, and a broader PDF toolkit are considered follow-on work, not v1 blockers.
+Additional themes, interactive Mermaid diagrams, linked TOC with printed page numbers, user-defined header/footer, batch conversion, SVG sanitization, optional externally hosted resources with explicit consent, WSL host-browser bridging, improved font embedding, and a broader PDF toolkit are considered follow-on work, not v1 blockers.
