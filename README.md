@@ -80,6 +80,7 @@ export const DEFAULTS = {
   paper: "a4",
   toc: false,
   numberSections: false,
+  mermaidErrors: "placeholder",
   overwrite: false,
   outputConflict: "increment",
   theme: "github-light",
@@ -166,6 +167,7 @@ The standalone **CLI** accepts `-o` as shorthand for `--output`. The Pi **`/md2p
 | `--output path` | Explicit PDF output (CLI and Pi); otherwise use the next free input.pdf / input-2.pdf / ... |
 | `-o path` | Short alias for `--output`, **standalone CLI only** (not accepted by `/md2pdf`) |
 | `--paper a4\|letter` | Page size, A4 by default |
+| `--mermaid-errors strict\|placeholder\|source` | Failed diagram policy (default: placeholder) |
 | `--toc` | Clickable heading table of contents, without page numbers |
 | `--number-sections` | Auto-number headings |
 | `--force` | Explicitly allow overwriting an existing PDF |
@@ -234,7 +236,7 @@ flowchart LR
 
 Mermaid runs in a separate, temporary JavaScript-enabled Chromium context, using only locally installed Mermaid modules. It produces SVG, which is validated and embedded as an inert image. The final PDF page still has JavaScript disabled and blocks network access. The same browser process is reused; no server, second browser installation, browser extension or runtime downloads are needed.
 
-YAML frontmatter (`title`, `config`, and compact Gantt `displayMode`) and legacy `init`/`initialize` directives support a limited allowlist: built-in themes, dagre/elk layout selection, basic visual settings, and simple theme variables. Unsupported configuration fields (including security overrides and custom CSS) produce a field-specific error. External images/resources, interactive links, and SVG features requiring active HTML (such as HTML labels) are not supported. Invalid diagrams fail conversion with a source line number. Diagrams are limited to 50 per document and are scaled to fit the printable page. Very large diagrams should be split for legibility.
+YAML frontmatter (`title`, `config`, and compact Gantt `displayMode`) and legacy `init`/`initialize` directives support a limited allowlist: built-in themes, dagre/elk layout selection, basic visual settings, and simple theme variables. Unsupported configuration fields (including security overrides and custom CSS) produce a field-specific error. External images/resources, interactive links, and SVG features requiring active HTML (such as HTML labels) are not supported. An invalid or unsupported diagram is handled according to `--mermaid-errors` (Pi tool parameter `mermaidErrors`): `placeholder` (default) inserts a line-numbered diagnostic **and** the original escaped Mermaid source, then continues; `source` inserts only the escaped source and continues; `strict` aborts conversion. Both continuing modes report failed diagram counts and lines in the CLI/Pi result. Browser, module loading, cancellation, timeout, resource limits and filesystem failures remain fatal. `htmlLabels: false` (including `flowchart.htmlLabels`) is accepted; enabling HTML labels is not supported. Bounded integer `handDrawnSeed` values are accepted. Diagrams are limited to 50 per document and are scaled to fit the printable page. Very large diagrams should be split for legibility.
 
 The Mermaid feature branch requires fresh installation, browser and PDF validation; the LaTeX branch validation does not verify Mermaid.
 

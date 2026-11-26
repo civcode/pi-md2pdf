@@ -70,6 +70,19 @@ describe("headless browser failure paths", () => {
     } finally { await rm(dir, { recursive: true, force: true }); }
   });
 
+  it("does not downgrade a diagram browser startup failure to a placeholder", async () => {
+    const { dir, input, output } = await setup();
+    try {
+      const { browser, page } = fakeBrowser();
+      Object.assign(browser, { createBrowserContext: vi.fn().mockRejectedValue(new Error("Target closed")) });
+      await writeFile(input, "\x60\x60\x60mermaid\nflowchart LR\nA-->B\n\x60\x60\x60");
+      await expect(convertMarkdownToPdf({ input, output })).rejects.toThrow("Target closed");
+      expect(page.pdf).not.toHaveBeenCalled();
+      expect(browser.close).toHaveBeenCalled();
+      await expect(readFile(output)).rejects.toMatchObject({ code: "ENOENT" });
+      await assertNoTemporaryFiles(dir);
+    } finally { await rm(dir, { recursive: true, force: true }); }
+  });
   it("closes Chromium and preserves existing output on PDF rendering failure", async () => {
     const { dir, input, output } = await setup();
     try {

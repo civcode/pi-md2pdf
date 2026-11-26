@@ -57,8 +57,16 @@ describe.skipIf(!available)("headless PDF rendering (requires installed Chromium
       const bad = path.join(dir, "bad.md");
       const badPdf = path.join(dir, "bad.pdf");
       await writeFile(bad, "```mermaid\nnot a diagram\n```");
-      await expect(convertMarkdownToPdf({ input: bad, output: badPdf })).rejects.toThrow("Mermaid diagram at line 1");
+      await expect(convertMarkdownToPdf({ input: bad, output: badPdf, mermaidErrors: "strict" })).rejects.toThrow("Mermaid diagram at line 1");
       await expect(readFile(badPdf)).rejects.toMatchObject({ code: "ENOENT" });
+      const mixed = "\x60\x60\x60mermaid\nnot a diagram\n\x60\x60\x60\n\n\x60\x60\x60mermaid\nflowchart LR\nA[Recovered] --> B\n\x60\x60\x60\n\nEnd sentinel";
+      await writeFile(bad, mixed);
+      for (const mode of ["placeholder", "source"] as const) {
+        const result = await convertMarkdownToPdf({ input: bad, output: badPdf, overwrite: true, mermaidErrors: mode });
+        expect(result.mermaidDiagnostics).toHaveLength(1);
+        expect(result.mermaidDiagnostics[0]?.line).toBe(1);
+        expect((await readFile(badPdf)).subarray(0, 5).toString()).toBe("%PDF-");
+      }
     } finally { await rm(dir, { recursive: true, force: true }); }
   }, 180_000);
   it("prints the math probe with locally embedded fonts", async () => {

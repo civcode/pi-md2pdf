@@ -9,6 +9,7 @@ describe("options", () => {
       paper: "a4",
       toc: false,
       numberSections: false,
+      mermaidErrors: "placeholder",
       overwrite: false,
       outputConflict: "increment",
       theme: "github-light",
@@ -25,6 +26,9 @@ describe("options", () => {
       const options = await prepareOptions({ input });
       expect(options.output).toBe(path.join(dir, "test.pdf"));
       expect(options.paper).toBe("a4");
+      expect(options.mermaidErrors).toBe("placeholder");
+      expect((await prepareOptions({ input, mermaidErrors: "strict" })).mermaidErrors).toBe("strict");
+      await expect(prepareOptions({ input, mermaidErrors: "wrong" as "strict" })).rejects.toThrow("Invalid Mermaid error mode");
       expect(options).toMatchObject({
         paper: DEFAULTS.paper,
         toc: DEFAULTS.toc,

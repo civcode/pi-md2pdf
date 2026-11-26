@@ -86,6 +86,10 @@ describe("Pi /md2pdf argument completion", () => {
     } finally { await rm(cwd, { recursive: true, force: true }); }
   });
 
+  it("completes Mermaid error modes", () => {
+    expect(getMd2pdfArgumentCompletions("report.md --mermaid-errors ")?.map(i => i.value))
+      .toEqual(["report.md --mermaid-errors placeholder", "report.md --mermaid-errors source", "report.md --mermaid-errors strict"]);
+  });
   it.skipIf(process.platform === "win32")("never follows a symlinked directory for local suggestions", async () => {
     const cwd = await fixture();
     const external = await mkdtemp(path.join(os.tmpdir(), "pi-md2pdf-external-"));

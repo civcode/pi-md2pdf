@@ -40,6 +40,8 @@ describe("Pi agent tool documentation", () => {
     expect(description).toContain("NEVER search the home directory");
     expect(description).toContain("current working directory");
     const schemaText = JSON.stringify(tools[0]!.parameters);
+    expect(schemaText).toContain("mermaidErrors");
+    expect(description).toContain("mermaidErrors=placeholder");
     expect(schemaText).toContain("ONLY");
     expect(schemaText).toContain("user requests");
     expect(schemaText).toContain("authorization");

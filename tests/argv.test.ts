@@ -30,6 +30,16 @@ describe("command arguments", () => {
     expect(HELP).toContain("-o, --output");
   });
 
+  it("parses Mermaid policies for CLI and Pi", () => {
+    for (const mode of ["strict", "placeholder", "source"]) {
+      expect(parseArgs(["report.md", "--mermaid-errors", mode]).options.mermaidErrors).toBe(mode);
+      expect(parseArgs(["report.md", "--mermaid-errors", mode], true, false).options.mermaidErrors).toBe(mode);
+    }
+    expect(() => parseArgs(["report.md", "--mermaid-errors", "invalid"])).toThrow("Invalid Mermaid error mode");
+    expect(() => parseArgs(["report.md", "--mermaid-errors"])).toThrow("Missing value");
+    expect(HELP).toContain("--mermaid-errors");
+    expect(PI_HELP).toContain("--mermaid-errors");
+  });
   it("parses quoted Pi command paths", () => {
     const args = parseArgs(tokenizeCommand('"some report.md" "final report.pdf" --toc'), true);
     expect(args.options).toMatchObject({ input: "some report.md", output: "final report.pdf", toc: true });

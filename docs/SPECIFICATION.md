@@ -68,6 +68,7 @@ Register `markdown_to_pdf` with a structured input containing:
 | `paper` | `a4` / `letter` | `a4` | Paper size |
 | `toc` | boolean | `false` | Linked table of contents |
 | `numberSections` | boolean | `false` | Number headings |
+| `mermaidErrors` | strict / placeholder / source | `placeholder` | Failed diagram policy |
 | `overwrite` | boolean | `false` | Explicit opt-in to replace output |
 
 The tool returns the final PDF path and concise success/error information. It does not ask interactive questions; the calling agent must obtain permission before opting into an overwrite. Tool execution supports cancellation where Pi provides an abort signal.
@@ -136,6 +137,7 @@ export const DEFAULTS = {
   paper: "a4",
   toc: false,
   numberSections: false,
+  mermaidErrors: "placeholder",
   overwrite: false,
   outputConflict: "increment",
   theme: "github-light",
@@ -190,7 +192,7 @@ Render a self-contained HTML document via the browser API, not a local HTTP serv
 
 **Math (feature branch):** Render the KaTeX math-mode subset locally in Node.js. Support inline dollar and bracket delimiters, display double-dollar and bracket delimiters on their own lines, and bare `math`/`latex` fences; `tex` fences preserve source. Embed CSS and math fonts as data URLs, disable trust in KaTeX, and retain the existing browser JavaScript/network restrictions. Report invalid expressions as conversion errors. Full LaTeX documents are not supported.
 
-**Mermaid (feature branch):** Render fenced `mermaid` diagrams with the installed Mermaid JavaScript module in a separate temporary browser context, using the same Chromium process as PDF generation. Intercept every request; only synthetic local module responses are permitted. Use strict security mode, allowlist safe visual configuration in YAML frontmatter and legacy init/initialize directives, prohibit security overrides and external resources, validate static SVG, and embed as an image. Close the context before creating the JavaScript-disabled PDF page. Enforce source, count and output size limits; report errors with source line numbers. HTML labels, interactive diagrams, remote images and non-allowlisted configuration overrides are out of scope.
+**Mermaid (feature branch):** Render fenced `mermaid` diagrams with the installed Mermaid JavaScript module in a separate temporary browser context, using the same Chromium process as PDF generation. Intercept every request; only synthetic local module responses are permitted. Use strict security mode, allowlist safe visual configuration in YAML frontmatter and legacy init/initialize directives, prohibit security overrides and external resources, validate static SVG, and embed as an image. Close the context before creating the JavaScript-disabled PDF page. Enforce source, count and output size limits. For document-local diagram failures, `placeholder` (default) emits a line-numbered diagnostic plus escaped original source, `source` emits only escaped source, and `strict` aborts. Continuing modes return structured diagnostics (line and message) to every interface. Infrastructure, cancellation, timeout, filesystem and resource-limit errors remain fatal. Never embed rejected SVG. HTML labels, interactive diagrams, remote images and non-allowlisted configuration overrides are out of scope.
 
 **Required printing behavior:**
 - Thin borders, natural/content-dependent table widths and alternating shading for tables; repeat table headers where the renderer permits.
