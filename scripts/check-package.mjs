@@ -78,7 +78,7 @@ try {
 
   console.log("Rendering sample PDF from the installed CLI...");
   const md = path.join(temp, "fixture.md");
-  await writeFile(md, "# Package smoke test\n\n| Check | Result |\n|---|---|\n| PDF | OK |\n");
+  await writeFile(md, "# Package smoke test\n\n| Check | Result |\n|---|---|\n| PDF | OK |\n\n$E=mc^2$\n\n```mermaid\nflowchart LR\n  A[Install] --> B[PDF]\n```\n");
   const output = path.join(temp, "fixture.pdf");
   process.stdout.write(run(process.execPath, [cli, md, "-o", output], temp));
   const pdf = await readFile(output);

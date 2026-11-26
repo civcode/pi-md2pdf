@@ -3,8 +3,12 @@ import hljs from "highlight.js";
 import Token from "markdown-it/lib/token.mjs";
 import { inlineLocalImages } from "./assets.js";
 import { enableMath, renderMath } from "./math.js";
+import { MERMAID_LIMITS, validateMermaidSource } from "./mermaid.js";
 
-export interface RenderOptions { toc: boolean; numberSections: boolean }
+export interface RenderOptions {
+  toc: boolean; numberSections: boolean;
+  renderMermaid?: (source: string) => Promise<string>;
+}
 export interface RenderResult { html: string; headings: { level: number; title: string; id: string }[] }
 
 function escapeHtml(value: string): string {
@@ -24,6 +28,9 @@ const md = new MarkdownIt({
   },
 });
 enableMath(md);
+md.renderer.rules.mermaid_image = (tokens, index) =>
+  '<figure class="md2pdf-mermaid"><img alt="Mermaid diagram" src="' +
+  escapeHtml(tokens[index]!.content) + '"></figure>\n';
 export async function renderMarkdown(source: string, input: string, opts: RenderOptions): Promise<RenderResult> {
   const env = {};
   const tokens = md.parse(source, env);
@@ -76,6 +83,26 @@ export async function renderMarkdown(source: string, input: string, opts: Render
     }
   }
   await inlineLocalImages(tokens, input);
+  const diagrams = tokens.filter(t => t.type === "fence" && t.info.trim() === "mermaid");
+  if (diagrams.length > MERMAID_LIMITS.diagrams) throw new Error("Too many Mermaid diagrams (maximum 50)");
+  let diagramBytes = 0;
+  for (const token of diagrams) {
+    const line = (token.map?.[0] ?? 0) + 1;
+    try {
+      validateMermaidSource(token.content);
+      if (!opts.renderMermaid) throw new Error("Mermaid requires the isolated Chromium renderer");
+      const svg = await opts.renderMermaid(token.content);
+      const bytes = Buffer.from(svg, "utf8");
+      if (bytes.length > MERMAID_LIMITS.svg) throw new Error("Mermaid SVG exceeds size limit");
+      diagramBytes += bytes.length;
+      if (diagramBytes > MERMAID_LIMITS.total) throw new Error("Mermaid diagrams exceed total size limit");
+      token.type = "mermaid_image";
+      token.content = "data:image/svg+xml;base64," + bytes.toString("base64");
+    } catch (error) {
+      throw new Error("Mermaid diagram at line " + line + ": " +
+        (error instanceof Error ? error.message : String(error)), { cause: error });
+    }
+  }
   const body = md.renderer.render(tokens, md.options, env);
   const toc = opts.toc && headings.length
     ? '<nav class="md2pdf-toc" aria-label="Table of contents"><h2>Table of contents</h2><ul>' +

@@ -52,6 +52,7 @@
     "highlight.js": "^11.11.1",
     "katex": "0.19.1",
     "markdown-it": "^14.1.0",
+    "mermaid": "12.3.0",
     "puppeteer-core": "^25.14.0"
   },
   "peerDependencies": {

@@ -195,7 +195,7 @@ None of these decisions changes the locked v1 product scope.
 
 ## Post-v1 backlog (not release blockers)
 
-- Mermaid support. TeX/LaTeX math support is implemented on the math feature branch, pending local acceptance testing.
+- Static Mermaid support is implemented on the Mermaid feature branch, pending installation, browser and PDF acceptance testing. TeX/LaTeX support passed the math branch's Linux validation workflow.
 - Alternative themes, fonts, templates and headers/footers.
 - Printed page-number-aware TOC.
 - Batch conversion and watch mode.

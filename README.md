@@ -222,6 +222,22 @@ Math is rendered locally in Node.js using KaTeX before Chromium prints the docum
 
 This feature branch requires fresh local tests and PDF verification; earlier Linux validation predates math support.
 
+## Mermaid diagrams
+
+Use a fenced `mermaid` block to include a static diagram:
+
+```mermaid
+flowchart LR
+  A[Markdown] --> B[Renderer]
+  B --> C[PDF]
+```
+
+Mermaid runs in a separate, temporary JavaScript-enabled Chromium context, using only locally installed Mermaid modules. It produces SVG, which is validated and embedded as an inert image. The final PDF page still has JavaScript disabled and blocks network access. The same browser process is reused; no server, second browser installation, browser extension or runtime downloads are needed.
+
+Configuration directives and YAML frontmatter, external images/resources, interactive links, and SVG features requiring active HTML (such as HTML labels) are not supported. Invalid diagrams fail conversion with a source line number. Diagrams are limited to 50 per document and are scaled to fit the printable page. Very large diagrams should be split for legibility.
+
+The Mermaid feature branch requires fresh installation, browser and PDF validation; the LaTeX branch validation does not verify Mermaid.
+
 ## Visual style
 
 The output uses the light [GitHub Markdown CSS](https://github.com/sindresorhus/github-markdown-css) with a print stylesheet for A4, tables, code blocks, and page breaks. Default print margins are 10 mm; smaller tables use natural width rather than stretching across the page. Exact pagination may vary across platforms and browser builds.

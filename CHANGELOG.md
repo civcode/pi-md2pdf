@@ -26,12 +26,14 @@ First planned public release. **Not yet published to npm or tagged.**
 
 - Local TeX/LaTeX math rendering via KaTeX, including inline/display delimiters and `math`/`latex` fences, with embedded fonts and no browser-side scripts or network requests.
 
+- Isolated local Mermaid rendering of fenced diagrams into static SVG images; final PDF page remains JavaScript-disabled. Mermaid feature branch pending validation.
+
 ### Notes and limitations
 
 - Requires Node.js 22.19+ and an existing compatible headless browser; no browser binary is bundled.
 - Linux with Chromium has passed local functional tests and a package-install smoke test.
 - Native Windows and macOS runtime verification remains pending; path-handling unit tests alone are not a substitute.
-- GitHub Light is the only v1 theme. Remote images, Mermaid, full LaTeX documents, and printed TOC page numbers are out of scope. Math rendering on the feature branch is pending runtime/PDF validation.
+- GitHub Light is the only v1 theme. Remote images, interactive Mermaid diagrams, full LaTeX documents, and printed TOC page numbers are out of scope. Math rendering on the feature branch is pending runtime/PDF validation.
 - Pi's agent tool is scoped to its working directory; explicit cross-directory conversion remains available with the direct slash command and CLI.
 
 When release is approved, replace *Unreleased* with the publication date, verify the final artifact, and only then create the tag/release and publish.

@@ -3,7 +3,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
 import puppeteer from "puppeteer-core";
-import { renderMarkdown } from "./markdown.js";
+import { renderMarkdown, type RenderOptions } from "./markdown.js";
+import { createMermaidRenderer, type MermaidRenderer } from "./mermaid.js";
 import { mathStylesheet } from "./math.js";
 import { DEFAULTS, prepareOptions, type ConversionOptions, type PreparedOptions } from "./options.js";
 import { resolveBrowser, browserVersion } from "./browser.js";
@@ -37,7 +38,7 @@ async function stylesheet(hasMath: boolean): Promise<string> {
   return (await readFile(github, "utf8")) + "\n" +
     (hasMath ? await mathStylesheet() : "") + "\n" + printCss;
 }
-export async function buildHtml(source: string, input: string, opts: { toc: boolean; numberSections: boolean }): Promise<string> {
+export async function buildHtml(source: string, input: string, opts: RenderOptions): Promise<string> {
   const rendered = await renderMarkdown(source, input, opts);
   const css = (await stylesheet(rendered.html.includes('<span class="katex"'))).replace(/<\/style/gi, "<\\/style");
   const title = path.basename(input).replace(/\.(md|markdown)$/i, "");
@@ -50,7 +51,7 @@ function abortError(signal?: AbortSignal): Error {
   const timedOut = (signal?.reason as { name?: string } | undefined)?.name === "TimeoutError";
   return Object.assign(new Error(timedOut ? "PDF conversion timed out" : "PDF conversion cancelled"), { name: timedOut ? "TimeoutError" : "AbortError" });
 }
-async function renderPdf(html: string, opts: PreparedOptions, pdfPath: string): Promise<void> {
+async function renderPdf(source: string, opts: PreparedOptions, pdfPath: string): Promise<void> {
   const browserPath = resolveBrowser(opts.browserPath);
   if (opts.signal?.aborted) throw abortError(opts.signal);
   const browser = await puppeteer.launch({ executablePath: browserPath, headless: true,
@@ -58,6 +59,23 @@ async function renderPdf(html: string, opts: PreparedOptions, pdfPath: string): 
   const onAbort = () => { void browser.close().catch(() => {}); };
   opts.signal?.addEventListener("abort", onAbort, { once: true });
   try {
+    if (opts.signal?.aborted) throw abortError(opts.signal);
+    // Lazily open an isolated JS-enabled context only for Mermaid blocks.
+    // Close it before the final JS-disabled page is even created.
+    let diagrams: MermaidRenderer | undefined;
+    let html: string;
+    try {
+      html = await buildHtml(source, opts.input, {
+        ...opts,
+        renderMermaid: async definition => {
+          if (opts.signal?.aborted) throw abortError(opts.signal);
+          diagrams ??= await createMermaidRenderer(browser, opts.timeoutMs);
+          return diagrams.render(definition);
+        },
+      });
+    } finally {
+      if (diagrams) await diagrams.close().catch(() => {});
+    }
     if (opts.signal?.aborted) throw abortError(opts.signal);
     const page = await browser.newPage();
     await page.setJavaScriptEnabled(false);
@@ -99,12 +117,11 @@ export async function convertMarkdownToPdf(options: ConversionOptions): Promise<
   if (existing && !opts.overwrite && !increment) throw new Error("Output already exists (use --force to overwrite): " + opts.output);
   const browser = resolveBrowser(opts.browserPath);
   const source = await readFile(opts.input, "utf8");
-  const html = await buildHtml(source, opts.input, opts);
   if (opts.signal?.aborted) throw abortError(opts.signal);
   const tmp = await mkdtemp(path.join(path.dirname(opts.output), ".md2pdf-"));
   const tempOutput = path.join(tmp, "rendered.pdf");
   try {
-    await renderPdf(html, opts, tempOutput);
+    await renderPdf(source, opts, tempOutput);
     const buffer = await readFile(tempOutput);
     if (buffer.byteLength < 5 || buffer.subarray(0, 5).toString("ascii") !== "%PDF-") {
       throw new Error("Browser returned an invalid PDF");

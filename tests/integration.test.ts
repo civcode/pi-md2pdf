@@ -4,9 +4,42 @@ import os from "node:os";
 import path from "node:path";
 import { checkBrowser, convertMarkdownToPdf } from "../src/core/convert.js";
 import { resolveBrowser } from "../src/core/browser.js";
+import puppeteer from "puppeteer-core";
+import { createMermaidRenderer } from "../src/core/mermaid.js";
 
 const available = (() => { try { resolveBrowser(); return true; } catch { return false; } })();
 describe.skipIf(!available)("headless PDF rendering (requires installed Chromium)", () => {
+  it("renders a Mermaid diagram to valid SVG inside a separate context", async () => {
+    const browser = await puppeteer.launch({ executablePath: resolveBrowser(), headless: true });
+    try {
+      const renderer = await createMermaidRenderer(browser, 30_000);
+      try {
+        const svg = await renderer.render("flowchart LR\n  A[Start] --> B[Finish]");
+        expect(svg).toContain("<svg");
+        expect(svg).toContain("Start");
+        expect(svg).toContain("Finish");
+        expect(svg).not.toMatch(/<script|<foreignObject/i);
+        await expect(renderer.render("not a Mermaid diagram")).rejects.toThrow();
+      } finally { await renderer.close(); }
+    } finally { await browser.close(); }
+  }, 90_000);
+  it("prints Mermaid diagrams and math together and rejects invalid diagrams", async () => {
+    const dir = await mkdtemp(path.join(os.tmpdir(), "md2pdf-mermaid-"));
+    try {
+      const input = path.join(dir, "mermaidtest.md");
+      const output = path.join(dir, "mermaidtest.pdf");
+      await writeFile(input, await readFile(new URL("./fixtures/mermaidtest.md", import.meta.url)));
+      await convertMarkdownToPdf({ input, output, toc: true, timeoutMs: 120_000 });
+      const pdf = await readFile(output);
+      expect(pdf.subarray(0, 5).toString()).toBe("%PDF-");
+      expect(pdf.toString("latin1")).toMatch(/KaTeX[_-]/);
+      const bad = path.join(dir, "bad.md");
+      const badPdf = path.join(dir, "bad.pdf");
+      await writeFile(bad, "```mermaid\nnot a diagram\n```");
+      await expect(convertMarkdownToPdf({ input: bad, output: badPdf })).rejects.toThrow("Mermaid diagram at line 1");
+      await expect(readFile(badPdf)).rejects.toMatchObject({ code: "ENOENT" });
+    } finally { await rm(dir, { recursive: true, force: true }); }
+  }, 180_000);
   it("prints the math probe with locally embedded fonts", async () => {
     const dir = await mkdtemp(path.join(os.tmpdir(), "md2pdf-math-"));
     try {

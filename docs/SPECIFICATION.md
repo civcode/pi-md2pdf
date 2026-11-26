@@ -27,7 +27,7 @@ The visual target is the *GitHub Light / Chrome Markdown Viewer* appearance: rea
 
 ### Explicitly out of scope for v1
 
-Mermaid rendering, full LaTeX document compilation (including arbitrary packages and TikZ), remote images, custom themes/templates, custom fonts, HTML/JavaScript execution from Markdown, GUI/live preview, interactive settings wizard, batch mode, image-to-PDF, PDF merging/splitting, printed TOC page numbers, and a WSL-to-Windows browser bridge. They can be evaluated after v1.
+Interactive Mermaid diagrams, full LaTeX document compilation (including arbitrary packages and TikZ), remote images, custom themes/templates, custom fonts, HTML/JavaScript execution from Markdown, GUI/live preview, interactive settings wizard, batch mode, image-to-PDF, PDF merging/splitting, printed TOC page numbers, and a WSL-to-Windows browser bridge. They can be evaluated after v1.
 
 ## 3. Entry points and user experience
 
@@ -190,6 +190,8 @@ Render a self-contained HTML document via the browser API, not a local HTTP serv
 
 **Math (feature branch):** Render the KaTeX math-mode subset locally in Node.js. Support inline dollar and bracket delimiters, display double-dollar and bracket delimiters on their own lines, and bare `math`/`latex` fences; `tex` fences preserve source. Embed CSS and math fonts as data URLs, disable trust in KaTeX, and retain the existing browser JavaScript/network restrictions. Report invalid expressions as conversion errors. Full LaTeX documents are not supported.
 
+**Mermaid (feature branch):** Render fenced `mermaid` diagrams with the installed Mermaid JavaScript module in a separate temporary browser context, using the same Chromium process as PDF generation. Intercept every request; only synthetic local module responses are permitted. Use strict security mode, disallow document-controlled configuration and external resources, validate static SVG, and embed as an image. Close the context before creating the JavaScript-disabled PDF page. Enforce source, count and output size limits; report errors with source line numbers. HTML labels, interactive diagrams, remote images and configuration overrides are out of scope.
+
 **Required printing behavior:**
 - Thin borders, natural/content-dependent table widths and alternating shading for tables; repeat table headers where the renderer permits.
 - Avoid heading orphans and unwanted splits through code blocks and table rows where practical.
@@ -285,4 +287,4 @@ A v1 release candidate must demonstrate:
 
 ## 10. Deferred ideas
 
-Additional themes, Mermaid, linked TOC with printed page numbers, user-defined header/footer, batch conversion, SVG sanitization, optional externally hosted resources with explicit consent, WSL host-browser bridging, improved font embedding, and a broader PDF toolkit are considered follow-on work, not v1 blockers.
+Additional themes, interactive Mermaid diagrams, linked TOC with printed page numbers, user-defined header/footer, batch conversion, SVG sanitization, optional externally hosted resources with explicit consent, WSL host-browser bridging, improved font embedding, and a broader PDF toolkit are considered follow-on work, not v1 blockers.

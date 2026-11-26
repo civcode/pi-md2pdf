@@ -10,6 +10,7 @@ Its runtime depends on the following open-source software:
 | [markdown-it](https://github.com/markdown-it/markdown-it) | MIT | [License](https://github.com/markdown-it/markdown-it/blob/master/LICENSE) |
 | [@mdit/plugin-tex](https://github.com/mdit-plugins/mdit-plugins) | MIT | [License](https://github.com/mdit-plugins/mdit-plugins/blob/main/LICENSE) |
 | [KaTeX](https://github.com/KaTeX/KaTeX) | MIT | [License](https://github.com/KaTeX/KaTeX/blob/main/LICENSE) |
+| [Mermaid](https://github.com/mermaid-js/mermaid) | MIT | [License](https://github.com/mermaid-js/mermaid/blob/develop/LICENSE) |
 | [puppeteer-core](https://github.com/puppeteer/puppeteer) | Apache-2.0 | [License](https://github.com/puppeteer/puppeteer/blob/main/LICENSE) |
 
 The Markdown CSS is loaded from `github-markdown-css` at runtime and is
