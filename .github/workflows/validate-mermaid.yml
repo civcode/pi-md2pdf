@@ -1,6 +1,9 @@
-name: Validate Mermaid rendering (manual)
+name: Validate Mermaid rendering
 
 on:
+  push:
+    branches:
+      - feat/mermaid-support
   workflow_dispatch:
 
 permissions:

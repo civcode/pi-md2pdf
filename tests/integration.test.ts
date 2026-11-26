@@ -19,6 +19,8 @@ describe.skipIf(!available)("headless PDF rendering (requires installed Chromium
         expect(svg).toContain("Start");
         expect(svg).toContain("Finish");
         expect(svg).not.toMatch(/<script|<foreignObject/i);
+        const second = await renderer.render("sequenceDiagram\n  Alice->>Bob: Second diagram");
+        expect(second).toContain("Second diagram");
         await expect(renderer.render("not a Mermaid diagram")).rejects.toThrow();
       } finally { await renderer.close(); }
     } finally { await browser.close(); }

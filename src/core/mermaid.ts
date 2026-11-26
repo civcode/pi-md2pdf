@@ -5,12 +5,18 @@ import type { Browser, BrowserContext, HTTPRequest, Page } from "puppeteer-core"
 
 const require = createRequire(import.meta.url);
 const ORIGIN = "https://md2pdf-mermaid.invalid";
-const ENTRY = ORIGIN + "/mermaid.esm.min.mjs";
+const BOOTSTRAP_URL = ORIGIN + "/bootstrap.mjs";
+// This literal module is served directly to Chromium, never transformed by
+// Vitest/Vite or tsup. Only installed Mermaid code is imported.
+const BOOTSTRAP = 'import mermaid from "./mermaid.esm.min.mjs";\n' +
+  'mermaid.initialize({ startOnLoad: false, securityLevel: "strict" });\n' +
+  'globalThis.__md2pdfMermaid = mermaid;\n';
+type MermaidGlobal = typeof globalThis & { __md2pdfMermaid?: typeof import("mermaid").default };
 const HTML = "<!doctype html><html><head><meta charset=\"utf-8\">" +
   "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; script-src 'self'; " +
   "style-src 'unsafe-inline'; img-src data:; font-src data:; connect-src 'none'; " +
   "object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'\">" +
-  "</head><body></body></html>";
+  '<script type="module" src="/bootstrap.mjs"></script></head><body></body></html>';
 
 export const MERMAID_LIMITS = { diagrams: 50, source: 50_000, svg: 5 * 1024 * 1024, total: 30 * 1024 * 1024 } as const;
 
@@ -42,6 +48,11 @@ async function intercept(request: HTTPRequest, dist: string): Promise<void> {
       await request.respond({ status: 200, contentType: "text/html; charset=utf-8", body: HTML });
       return;
     }
+    if (request.method() === "GET" && request.resourceType() === "script" &&
+        request.url() === BOOTSTRAP_URL) {
+      await request.respond({ status: 200, contentType: "text/javascript; charset=utf-8", body: BOOTSTRAP });
+      return;
+    }
     const module = request.resourceType() === "script" && request.method() === "GET"
       ? localMermaidModule(request.url()) : undefined;
     if (module) {
@@ -68,15 +79,21 @@ export async function createMermaidRenderer(browser: Browser, timeout: number): 
     page.on("request", request => { void intercept(request, dist).catch(() => {}); });
     page.setDefaultTimeout(timeout);
     await page.goto(ORIGIN + "/", { waitUntil: "load", timeout });
+    // The load event waits for the non-async module script. Fail clearly if
+    // an installed Mermaid module or one of its static imports did not load.
+    const ready = await page.evaluate(() =>
+      typeof (globalThis as MermaidGlobal).__md2pdfMermaid?.render === "function");
+    if (!ready) throw new Error("Failed to load the local Mermaid browser module");
     let count = 0;
     return {
       async render(source) {
         validateMermaidSource(source);
         const id = "md2pdf-diagram-" + ++count;
-        const svg = await page.evaluate(async (moduleUrl, definition, diagramId) => {
-          // Only the trusted, locally installed module is executed. The
-          // diagram definition is passed as a data argument, never as code.
-          const { default: mermaid } = await import(moduleUrl);
+        const svg = await page.evaluate(async (definition, diagramId) => {
+          // The browser loaded the trusted module via its own module loader.
+          // Diagram text remains data, never executable JavaScript.
+          const mermaid = (globalThis as MermaidGlobal).__md2pdfMermaid;
+          if (!mermaid) throw new Error("Local Mermaid module is not initialized");
           mermaid.initialize({
             startOnLoad: false, securityLevel: "strict", htmlLabels: false,
             flowchart: { htmlLabels: false }, theme: "default", arrowMarkerAbsolute: false,
@@ -122,7 +139,7 @@ export async function createMermaidRenderer(browser: Browser, timeout: number): 
           root.setAttribute("height", String(view[3]));
           root.removeAttribute("style");
           return new XMLSerializer().serializeToString(root);
-        }, ENTRY, source, id);
+        }, source, id);
         if (Buffer.byteLength(svg, "utf8") > MERMAID_LIMITS.svg) throw new Error("Mermaid SVG exceeds size limit");
         return svg;
       },
