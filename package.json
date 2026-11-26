@@ -1,7 +1,7 @@
 {
   "name": "pi-md2pdf",
   "version": "0.1.0",
-  "description": "Local Markdown-to-PDF exports for Pi and the terminal, with LaTeX math, Mermaid diagrams and an interactive settings menu.",
+  "description": "Markdown-to-PDF extension for Pi Coding Agent with LaTeX math, Mermaid diagrams, and fully local rendering.",
   "type": "module",
   "license": "MIT",
   "repository": {

@@ -1,12 +1,24 @@
 # pi-md2pdf
 
+[![npm version](https://img.shields.io/npm/v/pi-md2pdf)](https://www.npmjs.com/package/pi-md2pdf)
+[![npm downloads](https://img.shields.io/npm/dm/pi-md2pdf)](https://www.npmjs.com/package/pi-md2pdf)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](https://github.com/civcode/pi-md2pdf/blob/main/LICENSE)
+
 **Export Markdown to PDF directly from [Pi Coding Agent](https://pi.dev/).**
 
 Convert reports, specifications, technical notes and other Markdown documents to GitHub-style PDFs, without leaving Pi. Supports LaTeX equations, Mermaid diagrams, syntax-highlighted code, tables, local images, clickable links and optional tables of contents.
 
 Everything renders locally using your existing Chrome, Chromium or Edge browser. No document uploads, external rendering services or additional browser installation.
 
-> **Release status:** v0.1.0 is being prepared for its first npm publication. The installation command below will work once the package is published. Linux/Chromium has been tested; native Windows and macOS runtime verification remains pending.
+## Why pi-md2pdf?
+
+Pi is useful for writing and reviewing Markdown documents. When you need a PDF for sharing, printing or archiving, pi-md2pdf lets you export the original Markdown directly from the same session, without copying it into another application.
+
+- **Direct export:** use `/md2pdf` without a model call, or ask the agent to convert a file.
+- **Technical documents:** render LaTeX equations and Mermaid diagrams alongside tables, code and images.
+- **Persistent preferences:** configure paper size, contents, numbering and diagram error handling through `/md2pdf settings`.
+- **Safe output:** existing PDFs are preserved by default; repeated exports receive unique filenames.
+- **Local conversion:** uses your existing headless browser, without uploading documents.
 
 ## Installation
 
@@ -16,13 +28,46 @@ Requirements:
 - Node.js 22.19 or later.
 - **Chrome, Chromium or Microsoft Edge installed** and usable in headless mode.
 
+### Install from npm
+
 ~~~sh
+# All projects (global Pi installation)
 pi install npm:pi-md2pdf
+
+# Current project only
+pi install -l npm:pi-md2pdf
 ~~~
 
-Restart Pi to load the extension.
+Pi loads the installed extension when you start it. Project-local packages are subject to Pi's project-trust rules.
 
-## Usage in Pi
+### Try for one session
+
+~~~sh
+pi -e npm:pi-md2pdf
+~~~
+
+This loads the package for one invocation without adding it to your installed package settings.
+
+### Manage installed packages
+
+~~~sh
+pi list
+pi update npm:pi-md2pdf
+pi remove npm:pi-md2pdf
+~~~
+
+Use `-l` when removing a project-local installation. See [Pi's package documentation](https://docs.pi.dev/latest/packages) for package scope and management.
+
+## Commands
+
+| Command | Effect |
+| --- | --- |
+| `/md2pdf report.md` | Export Markdown to PDF beside the source file. |
+| `/md2pdf report.md output.pdf` | Export to an explicit PDF filename. |
+| `/md2pdf report.md --toc` | Include a linked table of contents. |
+| `/md2pdf report.md --number-sections` | Add heading numbering when not already present. |
+| `/md2pdf settings` | Open the interactive settings menu. |
+| `/md2pdf --help` | Show command help and options. |
 
 ### Direct command
 
@@ -42,19 +87,33 @@ The PDF is created alongside the Markdown file. To specify an output filename or
 
 Use Tab to complete Markdown filenames, directories, command options and option values. The slash command runs directly without a model call.
 
-### Ask the agent
+## Agent tool: `markdown_to_pdf`
 
-You can also ask Pi in natural language, for example:
+Pi exposes the `markdown_to_pdf` tool for agent-driven conversions. You can ask Pi in natural language, for example:
 
 - "Convert report.md to PDF."
 - "Export docs/specification.md with a table of contents."
 - "Convert report.md to PDF and preserve the existing heading numbering."
 
-Pi exposes the `markdown_to_pdf` tool for agent-driven conversions. The tool resolves input and output paths within the current project directory, never searches other projects for matching filenames, and reports the actual generated PDF path and any Mermaid warnings. Expand the tool result for details.
+The tool resolves input and output paths within the current project directory, never searches other projects for matching filenames, and reports the actual generated PDF path and any Mermaid warnings. Expand the tool result for details.
+
+| Parameter | Meaning |
+| --- | --- |
+| `input` | Required Markdown path within Pi's working directory. |
+| `output` | Optional explicit PDF path within the working directory. |
+| `paper` | Optional paper format override (`a4` or `letter`). |
+| `toc` | Optional table of contents override (boolean). |
+| `numberSections` | Optional heading numbering override (boolean). |
+| `mermaidErrors` | Optional diagram error mode override. |
+| `overwrite` | Allow an explicit output to be overwritten only with user authorization. |
+
+When optional formatting parameters are omitted, the tool uses your saved Pi preferences.
 
 For an explicitly chosen file outside the project directory, use the direct `/md2pdf` command with its absolute path.
 
-## Settings
+## Configuration
+
+### Settings overlay
 
 ~~~text
 /md2pdf settings
@@ -79,7 +138,20 @@ What happens if a diagram cannot be rendered:
 
 Both continuing modes report failed diagram counts and source line numbers in the conversion result. Browser failures, timeouts, cancellation, filesystem errors and resource-limit violations remain fatal in all modes.
 
-Settings are stored in `~/.pi/agent/md2pdf/settings.json` (or under your configured Pi agent directory). No restart is required after changing them.
+### Settings file
+
+Settings are stored globally for your Pi user in `~/.pi/agent/md2pdf/settings.json` (honoring `PI_CODING_AGENT_DIR`). The interactive menu is the recommended way to edit them. For reference, the initial configuration is:
+
+~~~json
+{
+  "paper": "a4",
+  "toc": false,
+  "numberSections": false,
+  "mermaidErrors": "placeholder"
+}
+~~~
+
+No restart is required after saving changes in the menu.
 
 ### Per-conversion options
 
@@ -134,7 +206,7 @@ $$
 
 Fractions, matrices, integrals, Greek letters, aligned equations and other KaTeX-supported math notation can be combined with normal Markdown, including table cells and headings.
 
-**[LaTeX math guide](docs/LATEX.md)** — syntax examples, supported delimiters, literal code, multiline equations, PDF layout tips and limitations.
+**[LaTeX math guide](https://github.com/civcode/pi-md2pdf/blob/main/docs/LATEX.md)** — syntax examples, supported delimiters, literal code, multiline equations, PDF layout tips and limitations.
 
 ## Mermaid diagrams
 
@@ -158,7 +230,7 @@ Mermaid diagrams render locally into validated, static SVG images in a separate 
 
 If a diagram fails, the configured [Mermaid error mode](#mermaid-error-modes) determines whether to preserve its source or abort.
 
-**[Mermaid diagram guide](docs/MERMAID.md)** — diagram examples, configuration reference, error handling, compatibility restrictions and print-layout guidance.
+**[Mermaid diagram guide](https://github.com/civcode/pi-md2pdf/blob/main/docs/MERMAID.md)** — diagram examples, configuration reference, error handling, compatibility restrictions and print-layout guidance.
 
 ## PDF appearance and privacy
 
@@ -176,20 +248,30 @@ Browser auto-detection:
 
 Use the `MD2PDF_BROWSER_PATH` environment variable or `--browser-path` to select another compatible browser. Native Windows and macOS runtime testing is still pending.
 
-## Update and uninstall
+## Limitations
 
-After publication:
-
-~~~sh
-pi update --extensions
-pi remove npm:pi-md2pdf
-~~~
+- Linux/Chromium has been tested; native Windows and macOS runtime validation remains pending.
+- Only the GitHub Light PDF theme is available.
+- The table of contents uses clickable links, not printed page numbers.
+- Raw HTML, remote images and arbitrary external resources are not supported.
+- LaTeX support is math-mode rendering, not full document compilation. Mermaid output is static, not interactive.
+- Review wide tables, long equations and complex diagrams in the generated PDF before sharing.
 
 ## Development and contributions
 
-See the [testing guide](https://github.com/civcode/pi-md2pdf/blob/main/docs/TESTING.md), [release checklist](https://github.com/civcode/pi-md2pdf/blob/main/docs/RELEASE.md), and [changelog](CHANGELOG.md). Report problems through [GitHub issues](https://github.com/civcode/pi-md2pdf/issues).
+See the [testing guide](https://github.com/civcode/pi-md2pdf/blob/main/docs/TESTING.md), [release checklist](https://github.com/civcode/pi-md2pdf/blob/main/docs/RELEASE.md), and [changelog](https://github.com/civcode/pi-md2pdf/blob/main/CHANGELOG.md). Report problems through [GitHub issues](https://github.com/civcode/pi-md2pdf/issues).
 
-Build and test from a source checkout:
+### Install from source (development)
+
+~~~sh
+git clone https://github.com/civcode/pi-md2pdf.git
+cd pi-md2pdf
+npm ci
+npm run build
+pi -e ./dist/extension.js
+~~~
+
+### Validation
 
 ~~~sh
 npm ci
@@ -204,11 +286,11 @@ pi --extension ./dist/extension.js
 
 The package checks use Pi's real extension loader and a clean temporary npm installation with a real headless browser. They do not publish anything.
 
-Licensed under [MIT](LICENSE). See [third-party notices](THIRD_PARTY_NOTICES.md).
+Licensed under [MIT](https://github.com/civcode/pi-md2pdf/blob/main/LICENSE). See [third-party notices](https://github.com/civcode/pi-md2pdf/blob/main/THIRD_PARTY_NOTICES.md).
 
 ## Standalone CLI (optional)
 
-You can use the same converter outside Pi. After npm publication:
+You can use the same converter outside Pi:
 
 ~~~sh
 npm install -g pi-md2pdf
