@@ -39,7 +39,9 @@ In Pi:
 /md2pdf report.md --toc --number-sections --paper a4
 ~~~
 
-Pi also exposes the `markdown_to_pdf` tool for agent-driven conversions. The slash command does **not** require a model call.
+**Pi also exposes the `markdown_to_pdf` tool for agent-driven conversions.** 
+
+The slash command does **not** require a model call.
 
 ### Pi settings menu
 
