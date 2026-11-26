@@ -32,6 +32,8 @@ First planned public release. **Not yet published to npm or tagged.**
 
 - Mermaid error modes across CLI and Pi: placeholder (default, diagnostic plus original source), source-only, and strict. Safe hand-drawn seeds and explicit SVG-only label settings are accepted.
 
+- Native `/md2pdf settings` menu with persistent Pi preferences for paper, TOC, heading numbering and Mermaid error policy; explicit save/reset and per-conversion negative flags.
+
 ### Notes and limitations
 
 - Requires Node.js 22.19+ and an existing compatible headless browser; no browser binary is bundled.

@@ -41,6 +41,19 @@ In Pi:
 
 Pi also exposes the `markdown_to_pdf` tool for agent-driven conversions. The slash command does **not** require a model call.
 
+### Pi settings menu
+
+Run `/md2pdf settings` in interactive Pi to open the native terminal settings overlay. Use the arrow keys to select a setting, Enter or Space to cycle its value, and **Save and close** to apply changes. **Reset to defaults** stages factory values; Escape discards unsaved edits.
+
+| Setting | Choices | Factory default |
+|---|---|---|
+| Paper format | a4, letter | a4 |
+| Table of contents | false, true | false |
+| Number sections | false, true | false |
+| Mermaid errors | placeholder, source, strict | placeholder |
+
+Preferences are saved atomically to `<agentDir>/md2pdf/settings.json` (normally `~/.pi/agent/md2pdf/settings.json`, honoring `PI_CODING_AGENT_DIR`). Both the slash command and agent tool read saved preferences for each conversion; no restart is required after saving. The standalone CLI keeps its factory defaults. Explicit arguments override saved settings, including `--no-toc` and `--no-number-sections` or the agent tool's explicit false values. Overwrite consent, output paths and security restrictions are never saved as preferences. The settings menu does not make model calls.
+
 ### Pi slash-command completion and agent tool display
 
 The interactive `/md2pdf` command provides **context-aware argument completion**.
@@ -55,7 +68,7 @@ completion key (typically **Tab**) to select a suggestion:
 /md2pdf report.md --paper    # Complete --paper, then choose a4 or letter
 ~~~
 
-Completion lists Markdown files, directories and supported flags only.
+Completion lists Markdown files, directories, supported flags and the settings subcommand.
 Filename suggestions stay inside the active working directory; the
 completion menu does not traverse symlinks to outside folders. Absolute
 paths remain supported for deliberately entered direct commands.
@@ -87,11 +100,7 @@ export const DEFAULTS = {
 } as const;
 ~~~
 
-Omitted options are normalized by the shared conversion engine. Pi's tool description
-and parameter descriptions explain these defaults to the agent. For a normal
-"convert this Markdown to PDF" request, **no TOC or new numbering is added**.
-Those features require an explicit request (`--toc` and `--number-sections`
-in the CLI or `toc: true` and `numberSections: true` in the agent tool).
+Omitted options are normalized by the shared conversion engine. Pi first applies saved user preferences if present. With factory defaults, a normal conversion adds no TOC or numbering. Explicit conversion flags or tool parameters override saved preferences; the agent should leave those parameters unset unless the user requests an override.
 GitHub Light is the fixed theme in v1; there is no theme option to configure.
 
 ### How Pi chooses the input file
@@ -139,13 +148,13 @@ In interactive Pi, the slash command may confirm an explicit overwrite.
 
 Tool descriptions **guide** the LLM; they cannot mechanically prove user intent.
 If Pi incorrectly adds an option despite the descriptions, direct use of
-`/md2pdf input.md` or `md2pdf input.md` always applies the conservative defaults.
+`/md2pdf input.md` applies saved Pi preferences, while `md2pdf input.md` applies the factory defaults.
 No separate Pi skill is installed, loaded, or required.
 
 
 ### Matching Chrome Markdown Viewer output
 
-For an export that resembles the original Markdown Viewer printout, convert **without** `--toc` or `--number-sections`:
+For an export that resembles the original Markdown Viewer printout, use the factory defaults or explicitly pass `--no-toc --no-number-sections` to override saved Pi preferences:
 
 ~~~sh
 md2pdf specification.md -o specification.pdf
@@ -168,7 +177,7 @@ The standalone **CLI** accepts `-o` as shorthand for `--output`. The Pi **`/md2p
 | `-o path` | Short alias for `--output`, **standalone CLI only** (not accepted by `/md2pdf`) |
 | `--paper a4\|letter` | Page size, A4 by default |
 | `--mermaid-errors strict\|placeholder\|source` | Failed diagram policy (default: placeholder) |
-| `--toc` | Clickable heading table of contents, without page numbers |
+| `--toc` / `--no-toc` | Enable / disable clickable heading table of contents, without page numbers |
 | `--number-sections` | Auto-number headings |
 | `--force` | Explicitly allow overwriting an existing PDF |
 | `--browser-path path` | Browser executable |

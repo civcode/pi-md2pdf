@@ -27,7 +27,7 @@ The visual target is the *GitHub Light / Chrome Markdown Viewer* appearance: rea
 
 ### Explicitly out of scope for v1
 
-Interactive Mermaid diagrams, full LaTeX document compilation (including arbitrary packages and TikZ), remote images, custom themes/templates, custom fonts, arbitrary HTML/JavaScript execution from Markdown, GUI/live preview, interactive settings wizard, batch mode, image-to-PDF, PDF merging/splitting, printed TOC page numbers, and a WSL-to-Windows browser bridge. They can be evaluated after v1.
+Interactive Mermaid diagrams, full LaTeX document compilation (including arbitrary packages and TikZ), remote images, custom themes/templates, custom fonts, arbitrary HTML/JavaScript execution from Markdown, GUI/live preview, batch mode, image-to-PDF, PDF merging/splitting, printed TOC page numbers, and a WSL-to-Windows browser bridge. They can be evaluated after v1.
 
 ## 3. Entry points and user experience
 
@@ -130,6 +130,8 @@ TOC contains clickable heading links, **not printed page numbers**. TOC and numb
 
 ### 3.5 Shared defaults and agent tool guidance
 
+`/md2pdf settings` MUST open a native Pi TUI SettingsList overlay for paper, TOC, numbering, and Mermaid error policy. User edits are staged; Save persists atomically, Escape cancels, and Reset restores factory values in the draft. Persist settings in `<agentDir>/md2pdf/settings.json`, honoring Pi's agent-directory override. Both Pi conversion interfaces MUST use saved preferences for omitted options and explicit arguments take precedence, including false values. Standalone CLI defaults remain unchanged. Non-TUI settings requests MUST report a clear error without modifying files. Persistent settings MUST NOT authorize overwrites, change paths, or relax security restrictions.
+
 All interfaces MUST use the immutable TypeScript defaults in `src/core/options.ts`:
 
 ~~~typescript
@@ -144,7 +146,7 @@ export const DEFAULTS = {
 } as const;
 ~~~
 
-The core options normalizer applies these defaults to omitted values.
+The core options normalizer applies these factory defaults to omitted values, after Pi applies user-saved preferences.
 When a caller omits the output filename and the derived .pdf exists, the
 converter MUST atomically select `-2`, `-3`, etc. without a confirmation.
 Explicit output path collisions MUST fail unless overwrite is authorized;
@@ -156,7 +158,7 @@ same values rather than repeating independent literal defaults.
 
 The Pi agent-tool description MUST instruct the model to preserve original
 heading structure and appearance when asked to convert Markdown as-is. It MUST
-explain that TOC and additional numbering are opt-in even for a long report.
+explain that TOC and additional numbering are off at factory defaults, and saved user preferences apply unless explicitly overridden.
 The `overwrite` parameter requires explicit user authorization. Tool descriptions
 guide the model but cannot guarantee its choice; final option normalization and
 overwrite safeguards remain enforced by code.

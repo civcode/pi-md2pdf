@@ -47,5 +47,5 @@ export async function editPdfSettings(ctx: ExtensionContext, initial: PdfSetting
       invalidate: () => container.invalidate(),
       handleInput: data => { list.handleInput(data); tui.requestRender(); },
     };
-  });
+  }, { overlay: true, overlayOptions: { width: "70%", minWidth: 50, anchor: "center", margin: 1 } });
 }

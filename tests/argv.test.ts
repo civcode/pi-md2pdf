@@ -40,6 +40,12 @@ describe("command arguments", () => {
     expect(HELP).toContain("--mermaid-errors");
     expect(PI_HELP).toContain("--mermaid-errors");
   });
+  it("supports explicit false overrides for saved preferences", () => {
+    expect(parseArgs(["report.md", "--no-toc", "--no-number-sections"], true, false).options)
+      .toMatchObject({ toc: false, numberSections: false });
+    expect(parseArgs(["report.md", "--toc", "--no-toc"]).options.toc).toBe(false);
+    expect(PI_HELP).toContain("/md2pdf settings");
+  });
   it("parses quoted Pi command paths", () => {
     const args = parseArgs(tokenizeCommand('"some report.md" "final report.pdf" --toc'), true);
     expect(args.options).toMatchObject({ input: "some report.md", output: "final report.pdf", toc: true });

@@ -73,6 +73,16 @@ describe("Pi /md2pdf argument completion", () => {
     } finally { await rm(cwd, { recursive: true, force: true }); }
   });
 
+  it("completes the settings subcommand and explicit false flags", async () => {
+    const cwd = await fixture();
+    try {
+      expect(getMd2pdfArgumentCompletions("set", cwd)?.map(i => i.value)).toEqual(["settings"]);
+      expect(getMd2pdfArgumentCompletions("settings", cwd)).toBeNull();
+      expect(getMd2pdfArgumentCompletions("settings ", cwd)).toBeNull();
+      expect(getMd2pdfArgumentCompletions("report.md --no-", cwd)?.map(i => i.value))
+        .toEqual(["report.md --no-toc", "report.md --no-number-sections"]);
+    } finally { await rm(cwd, { recursive: true, force: true }); }
+  });
   it("completes paper values, then allows later flags", async () => {
     const cwd = await fixture();
     try {
