@@ -32,7 +32,8 @@ describe("Mermaid Markdown integration", () => {
   });
   it("only maps local Mermaid JS modules, never external resources", () => {
     expect(localMermaidModule("https://md2pdf-mermaid.invalid/chunks/mermaid.esm.min/chunk-ABC.mjs")).toBe("chunks/mermaid.esm.min/chunk-ABC.mjs");
-    for (const url of ["https://example.com/evil.js", "file:///etc/passwd", "https://md2pdf-mermaid.invalid/%2e%2e%2fsecret.js", "https://md2pdf-mermaid.invalid/other.png", "https://md2pdf-mermaid.invalid/mermaid.esm.min.mjs?remote=1"]) {
+    expect(localMermaidModule("https://md2pdf-mermaid.invalid/mermaid.esm.min.mjs")).toBe("mermaid.esm.min.mjs");
+    for (const url of ["https://md2pdf-mermaid.invalid/other.js", "https://example.com/evil.js", "file:///etc/passwd", "https://md2pdf-mermaid.invalid/%2e%2e%2fsecret.js", "https://md2pdf-mermaid.invalid/other.png", "https://md2pdf-mermaid.invalid/mermaid.esm.min.mjs?remote=1"]) {
       expect(localMermaidModule(url)).toBeUndefined();
     }
   });

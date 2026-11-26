@@ -27,7 +27,7 @@ The visual target is the *GitHub Light / Chrome Markdown Viewer* appearance: rea
 
 ### Explicitly out of scope for v1
 
-Interactive Mermaid diagrams, full LaTeX document compilation (including arbitrary packages and TikZ), remote images, custom themes/templates, custom fonts, HTML/JavaScript execution from Markdown, GUI/live preview, interactive settings wizard, batch mode, image-to-PDF, PDF merging/splitting, printed TOC page numbers, and a WSL-to-Windows browser bridge. They can be evaluated after v1.
+Interactive Mermaid diagrams, full LaTeX document compilation (including arbitrary packages and TikZ), remote images, custom themes/templates, custom fonts, arbitrary HTML/JavaScript execution from Markdown, GUI/live preview, interactive settings wizard, batch mode, image-to-PDF, PDF merging/splitting, printed TOC page numbers, and a WSL-to-Windows browser bridge. They can be evaluated after v1.
 
 ## 3. Entry points and user experience
 

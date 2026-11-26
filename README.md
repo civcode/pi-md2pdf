@@ -212,7 +212,7 @@ No GitHub Actions workflow is required for local checks.
 
 ## TeX / LaTeX math
 
-Math is rendered locally in Node.js using KaTeX before Chromium prints the document. No Chrome extension, TeX installation, browser JavaScript, CDN, external server or runtime network access is required. The installed KaTeX CSS and fonts are embedded in the generated HTML only when math is present.
+Math is rendered locally in Node.js using KaTeX before Chromium prints the document. No Chrome extension, TeX installation, browser-side math JavaScript, CDN, external server or runtime network access is required. The installed KaTeX CSS and fonts are embedded in the generated HTML only when math is present.
 
 - Inline: `$E = mc^2$` or `\(E = mc^2\)`.
 - Display: `$$...$$` or `\[...\]` on their own lines (single-line and multiline).

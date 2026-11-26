@@ -74,7 +74,7 @@ async function renderPdf(source: string, opts: PreparedOptions, pdfPath: string)
         },
       });
     } finally {
-      if (diagrams) await diagrams.close().catch(() => {});
+      if (diagrams) await diagrams.close();
     }
     if (opts.signal?.aborted) throw abortError(opts.signal);
     const page = await browser.newPage();

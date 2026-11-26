@@ -31,7 +31,8 @@ export function localMermaidModule(url: string): string | undefined {
   try { parsed = new URL(url); } catch { return undefined; }
   if (parsed.origin !== ORIGIN || parsed.search || parsed.hash) return undefined;
   const relative = parsed.pathname.slice(1);
-  if (!/^(?:[A-Za-z0-9_-]+\/)*[A-Za-z0-9_-][A-Za-z0-9_.-]*\.(?:js|mjs)$/.test(relative)) return undefined;
+  if (!/^(?:[A-Za-z0-9_-][A-Za-z0-9_.-]*\/)*[A-Za-z0-9_-][A-Za-z0-9_.-]*\.(?:js|mjs)$/.test(relative)) return undefined;
+  if (relative !== "mermaid.esm.min.mjs" && !relative.startsWith("chunks/")) return undefined;
   return relative;
 }
 
@@ -78,10 +79,10 @@ export async function createMermaidRenderer(browser: Browser, timeout: number): 
           const { default: mermaid } = await import(moduleUrl);
           mermaid.initialize({
             startOnLoad: false, securityLevel: "strict", htmlLabels: false,
-            flowchart: { htmlLabels: false }, theme: "default",
+            flowchart: { htmlLabels: false }, theme: "default", arrowMarkerAbsolute: false,
             maxTextSize: 50_000, maxEdges: 500, suppressErrorRendering: true,
             secure: ["secure", "securityLevel", "startOnLoad", "maxTextSize",
-              "maxEdges", "suppressErrorRendering", "htmlLabels", "flowchart"],
+              "maxEdges", "suppressErrorRendering", "htmlLabels", "flowchart", "arrowMarkerAbsolute"],
           });
           const { svg: result } = await mermaid.render(diagramId, definition);
           // Never execute the returned bindFunctions or insert the diagram
