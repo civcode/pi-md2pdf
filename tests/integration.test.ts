@@ -7,6 +7,13 @@ import { resolveBrowser } from "../src/core/browser.js";
 import puppeteer from "puppeteer-core";
 import { createMermaidRenderer } from "../src/core/mermaid.js";
 
+// Mermaid may split labels into several nested SVG tspan elements. Check
+// the text of each SVG text element rather than its serialized markup.
+function svgLabels(svg: string): string[] {
+  return Array.from(svg.matchAll(/<text\b[^>]*>([\s\S]*?)<\/text>/g), match =>
+    match[1]!.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim());
+}
+
 const available = (() => { try { resolveBrowser(); return true; } catch { return false; } })();
 describe.skipIf(!available)("headless PDF rendering (requires installed Chromium)", () => {
   it("renders a Mermaid diagram to valid SVG inside a separate context", async () => {
@@ -16,16 +23,16 @@ describe.skipIf(!available)("headless PDF rendering (requires installed Chromium
       try {
         const svg = await renderer.render("flowchart LR\n  A[Start] --> B[Finish]");
         expect(svg).toContain("<svg");
-        expect(svg).toContain("Start");
-        expect(svg).toContain("Finish");
+        expect(svgLabels(svg)).toContain("Start");
+        expect(svgLabels(svg)).toContain("Finish");
         expect(svg).not.toMatch(/<script|<foreignObject/i);
         const second = await renderer.render("sequenceDiagram\n  Alice->>Bob: Second diagram");
-        expect(second).toContain("Second diagram");
+        expect(svgLabels(second)).toContain("Second diagram");
         const configured = await renderer.render("---\ntitle: Configured flow\nconfig:\n  theme: neutral\n  flowchart:\n    curve: linear\n---\nflowchart LR\nA[Configured start] --> B[Configured end]");
-        expect(configured).toContain("Configured start");
+        expect(svgLabels(configured)).toEqual(expect.arrayContaining(["Configured start", "Configured end", "Configured flow"]));
         expect(configured).not.toMatch(/<script|<foreignObject/i);
         const legacy = await renderer.render("%%{init: {'theme':'base'}}%%\nflowchart LR\nA[Legacy configuration] --> B");
-        expect(legacy).toContain("Legacy configuration");
+        expect(svgLabels(legacy)).toContain("Legacy configuration");
         await expect(renderer.render("not a Mermaid diagram")).rejects.toThrow();
       } finally { await renderer.close(); }
     } finally { await browser.close(); }
