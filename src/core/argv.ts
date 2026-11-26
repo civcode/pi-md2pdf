@@ -29,7 +29,9 @@ export function parseArgs(argv: string[], allowPositionalOutput = false, allowSh
     if (flag === "--version" || flag === "-v") { version = true; continue; }
     if (flag === "--check") { check = true; continue; }
     if (flag === "--toc") { options.toc = true; continue; }
+    if (flag === "--no-toc") { options.toc = false; continue; }
     if (flag === "--number-sections") { options.numberSections = true; continue; }
+    if (flag === "--no-number-sections") { options.numberSections = false; continue; }
     if (flag === "--force") { options.overwrite = true; continue; }
     if (flag === "-o" && !allowShortOutput) throw new Error("Unknown option: -o (use --output or a positional PDF filename)");
     if (["-o", "--output", "--paper", "--browser-path", "--mermaid-errors"].includes(flag)) {
@@ -60,8 +62,9 @@ export const HELP = `Usage: md2pdf input.md [-o output.pdf] [options]
 
 Options:
   -o, --output PATH      Explicit PDF path; fail if occupied (unless --force)\n                         Omitted: input.pdf, then input-2.pdf, input-3.pdf, ...
-      --toc              Add linked table of contents (default: ${DEFAULTS.toc})
-      --number-sections  Add heading numbering (default: ${DEFAULTS.numberSections})
+      --toc / --no-toc    Enable / disable linked table of contents (factory default: ${DEFAULTS.toc})
+      --number-sections / --no-number-sections
+                         Enable / disable heading numbering (factory default: ${DEFAULTS.numberSections})
       --paper a4|letter  Page format (default: ${DEFAULTS.paper})
       --mermaid-errors strict|placeholder|source
                          Failed diagram policy (default: ${DEFAULTS.mermaidErrors})
@@ -77,11 +80,15 @@ Environment: MD2PDF_BROWSER_PATH overrides automatic discovery.
 
 /** Slash-command help deliberately differs from CLI help: no -o shorthand. */
 export const PI_HELP = `Usage: /md2pdf input.md [output.pdf] [options]
+       /md2pdf settings  Configure saved Pi defaults (interactive menu)
+
+Explicit options override saved defaults. Omitted options use saved Pi preferences.
 
 Options:
       --output PATH      Explicit PDF filename (alternative to positional output)
-      --toc              Add linked table of contents (default: ${DEFAULTS.toc})
-      --number-sections  Add heading numbering (default: ${DEFAULTS.numberSections})
+      --toc / --no-toc    Enable / disable linked table of contents (factory default: ${DEFAULTS.toc})
+      --number-sections / --no-number-sections
+                         Enable / disable heading numbering (factory default: ${DEFAULTS.numberSections})
       --paper a4|letter  Page format (default: ${DEFAULTS.paper})
       --mermaid-errors strict|placeholder|source
                          Failed diagram policy (default: ${DEFAULTS.mermaidErrors})

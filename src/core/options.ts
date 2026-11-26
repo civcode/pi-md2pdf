@@ -10,7 +10,7 @@ export function parseMermaidErrorMode(value: unknown): MermaidErrorMode {
 
 /**
  * Single source of truth for behavior shared by the CLI, Pi slash command,
- * and agent-callable tool. All optional formatting is opt-in.
+ * and agent-callable tool. Pi may apply user-saved preferences before normalization.
  * Only GitHub Light is supported in v1.
  */
 export const DEFAULTS = {

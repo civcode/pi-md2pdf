@@ -4,6 +4,8 @@ import type { AutocompleteItem } from "@earendil-works/pi-tui";
 
 const FLAGS: AutocompleteItem[] = [
   { value: "--toc", label: "--toc", description: "Add linked table of contents (off by default)" },
+  { value: "--no-toc", label: "--no-toc", description: "Disable table of contents for this conversion" },
+  { value: "--no-number-sections", label: "--no-number-sections", description: "Disable heading numbering for this conversion" },
   { value: "--number-sections", label: "--number-sections", description: "Add heading numbers (off by default)" },
   { value: "--paper", label: "--paper", description: "Paper size: a4 (default) or letter" },
   { value: "--mermaid-errors", label: "--mermaid-errors", description: "Failed diagrams: placeholder (default), source or strict" },
@@ -133,6 +135,7 @@ export function getMd2pdfArgumentCompletions(
   const { previous, current, start } = cursorTokens(args);
   const before = args.slice(0, start);
   const last = previous.at(-1);
+  if (previous[0] === "settings") return null;
   if (last === "--paper") {
     return optionSuggestions([
       { value: "a4", label: "a4", description: "A4 (default)" },
@@ -152,5 +155,10 @@ export function getMd2pdfArgumentCompletions(
     if (!current.startsWith("-") && current !== "") return null;
     return optionSuggestions(FLAGS, current, before, previous);
   }
-  return markdownPathSuggestions(current, before, cwd);
+  const files = markdownPathSuggestions(current, before, cwd) ?? [];
+  const settings = previous.length === 0 && current !== "settings" && "settings".startsWith(current.toLowerCase())
+    ? [{ value: before + "settings", label: "settings", description: "Configure md2pdf defaults" }]
+    : [];
+  const items = [...settings, ...files];
+  return items.length ? items : null;
 }
