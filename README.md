@@ -50,7 +50,7 @@ You can also ask Pi in natural language, for example:
 - "Export docs/specification.md with a table of contents."
 - "Convert report.md to PDF and preserve the existing heading numbering."
 
-Pi uses the `markdown_to_pdf` tool. The tool resolves input and output paths within the current project directory, never searches other projects for matching filenames, and reports the actual generated PDF path and any Mermaid warnings. Expand the tool result for details.
+**Pi exposes the `markdown_to_pdf` tool for agent-driven conversions.** The tool resolves input and output paths within the current project directory, never searches other projects for matching filenames, and reports the actual generated PDF path and any Mermaid warnings. Expand the tool result for details.
 
 For an explicitly chosen file outside the project directory, use the direct `/md2pdf` command with its absolute path.
 
@@ -67,17 +67,17 @@ Use Up/Down to select a setting, Enter/Space to change its value, and Escape to 
 | Paper format | a4, letter | a4 |
 | Table of contents | false, true | false |
 | Number sections | false, true | false |
-| Mermaid errors | placeholder, source, strict | placeholder |
+| Mermaid errors | `placeholder`, `source`, `strict` | `placeholder` |
 
 ### Mermaid error modes
 
-| Mode | Behavior when a diagram cannot be rendered |
-| --- | --- |
-| **placeholder** (default) | Insert an error message with its source line number **and** the original Mermaid code; continue generating the PDF. |
-| **source** | Insert only the original Mermaid code as a literal code block; continue generating the PDF. |
-| **strict** | Abort conversion at the first diagram error; do not publish a new PDF. |
+What happens if a diagram cannot be rendered:
 
-Both continuing modes report failed diagram counts and line numbers in the conversion result. Browser failures, timeouts, cancellation, filesystem errors and resource-limit violations remain fatal in all modes.
+- **`placeholder` (default):** Insert an error message with the source line number and the original Mermaid code as a literal code block. Continue generating the PDF.
+- **`source`:** Insert only the original Mermaid code as a literal code block, without an error message in the PDF. Continue generating the PDF.
+- **`strict`:** Abort conversion at the first diagram error. No new PDF is generated.
+
+Both continuing modes report failed diagram counts and source line numbers in the conversion result. Browser failures, timeouts, cancellation, filesystem errors and resource-limit violations remain fatal in all modes.
 
 Settings are stored in `~/.pi/agent/md2pdf/settings.json` (or under your configured Pi agent directory). No restart is required after changing them.
 
