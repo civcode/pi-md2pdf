@@ -11,8 +11,15 @@ import { createMermaidRenderer } from "../src/core/mermaid.js";
 // the text of each SVG text element rather than its serialized markup.
 function svgLabels(svg: string): string[] {
   return Array.from(svg.matchAll(/<text\b[^>]*>([\s\S]*?)<\/text>/g), match =>
-    match[1]!.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim());
+    match[1]!.replace(/<tspan\b[^>]*class="[^"]*\brow\b[^"]*"[^>]*>/g, " ")
+      .replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim());
 }
+
+it("extracts SVG labels across nested spans and wrapped rows", () => {
+  expect(svgLabels('<text><tspan class="text-outer-tspan row"><tspan>Legacy</tspan></tspan>' +
+    '<tspan class="text-outer-tspan row"><tspan>config</tspan><tspan>uration</tspan></tspan></text>'))
+    .toEqual(["Legacy configuration"]);
+});
 
 const available = (() => { try { resolveBrowser(); return true; } catch { return false; } })();
 describe.skipIf(!available)("headless PDF rendering (requires installed Chromium)", () => {
