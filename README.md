@@ -14,7 +14,7 @@ Requirements:
 
 - Pi Coding Agent.
 - Node.js 22.19 or later.
-- Chrome, Chromium or Microsoft Edge installed and usable in headless mode.
+- **Chrome, Chromium or Microsoft Edge installed** and usable in headless mode.
 
 ~~~sh
 pi install npm:pi-md2pdf
@@ -50,7 +50,7 @@ You can also ask Pi in natural language, for example:
 - "Export docs/specification.md with a table of contents."
 - "Convert report.md to PDF and preserve the existing heading numbering."
 
-**Pi exposes the `markdown_to_pdf` tool for agent-driven conversions.** The tool resolves input and output paths within the current project directory, never searches other projects for matching filenames, and reports the actual generated PDF path and any Mermaid warnings. Expand the tool result for details.
+Pi exposes the `markdown_to_pdf` tool for agent-driven conversions. The tool resolves input and output paths within the current project directory, never searches other projects for matching filenames, and reports the actual generated PDF path and any Mermaid warnings. Expand the tool result for details.
 
 For an explicitly chosen file outside the project directory, use the direct `/md2pdf` command with its absolute path.
 
